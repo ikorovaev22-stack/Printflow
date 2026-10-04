@@ -11,12 +11,13 @@ export const getCompanyBySlug = cache(async (slug: string) => {
 
 export const getSession = cache(async () => {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims.sub;
+  if (!userId) return null;
   const { data: profile } = await supabase
     .from("profiles")
     .select("*, company:companies(*)")
-    .eq("id", data.user.id)
+    .eq("id", userId)
     .maybeSingle<Profile & { company: Company }>();
   return profile ? { supabase, profile, company: profile.company } : null;
 });

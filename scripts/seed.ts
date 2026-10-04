@@ -30,6 +30,11 @@ async function main() {
   for (const u of list?.users ?? []) {
     if (users.some((x) => x.email === u.email)) await admin.auth.admin.deleteUser(u.id);
   }
+  const { data: old } = await admin.from("companies").select("id").eq("slug", SLUG).maybeSingle();
+  if (old) {
+    const { data: files } = await admin.storage.from("logos").list(old.id);
+    if (files?.length) await admin.storage.from("logos").remove(files.map((f) => `${old.id}/${f.name}`));
+  }
   must(await admin.from("companies").delete().eq("slug", SLUG));
 
   const company = must(

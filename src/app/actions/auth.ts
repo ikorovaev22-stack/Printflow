@@ -61,11 +61,11 @@ export async function signOut(fd: FormData) {
 
 export async function updateProfile(_: FormState, fd: FormData): Promise<FormState> {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return { error: "Сессия истекла" };
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims.sub) return { error: "Сессия истекла" };
   const { error } = await supabase
     .from("profiles")
     .update({ full_name: str(fd, "full_name"), phone: str(fd, "phone") || null })
-    .eq("id", data.user.id);
+    .eq("id", data.claims.sub);
   return error ? { error: "Не удалось сохранить" } : { message: "Сохранено" };
 }
