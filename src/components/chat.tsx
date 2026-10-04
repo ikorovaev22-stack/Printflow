@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, CheckCheck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function Chat({ companyId, clientId, meId, side, initialMessages, empty }: Props) {
+  const router = useRouter();
   const [supabase] = useState(createClient);
   const [messages, setMessages] = useState(initialMessages);
   const [text, setText] = useState("");
@@ -38,7 +40,8 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
         .eq("client_id", clientId)
         .eq("from_client", incomingFromClient)
         .is("read_at", null)
-        .then();
+        .select("id")
+        .then(({ data }) => data?.length && router.refresh());
 
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) supabase.realtime.setAuth(data.session.access_token);
@@ -63,7 +66,7 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
       document.removeEventListener("visibilitychange", onVisible);
       if (channel) supabase.removeChannel(channel);
     };
-  }, [supabase, clientId, incomingFromClient]);
+  }, [supabase, clientId, incomingFromClient, router]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });

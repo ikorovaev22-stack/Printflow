@@ -13,3 +13,8 @@ export function brandStyle(color: string): CSSProperties {
     "--ring": color,
   } as CSSProperties;
 }
+
+export function companyInitial(name: string) {
+  const quoted = name.match(/[«"“]([^»"”]+)/)?.[1];
+  return (quoted ?? name).replace(/[^\p{L}\p{N}]/gu, "").charAt(0).toUpperCase();
+}

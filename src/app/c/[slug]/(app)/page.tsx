@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, ChevronRight, Package } from "lucide-react";
 import { CompanyLogo } from "@/components/company-logo";
+import { InstallBanner } from "@/components/client/install-banner";
 import { OrderProgress } from "@/components/client/order-timeline";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Screen } from "@/components/client/screen";
@@ -27,6 +28,7 @@ export default async function OrdersScreen({ params }: PageProps<"/c/[slug]">) {
   return (
     <Screen title="Мои заказы" action={<CompanyLogo company={company} />}>
       <RealtimeRefresh table="orders" filter={`client_id=eq.${profile.id}`} />
+      <InstallBanner />
       {!orders.length && (
         <div className="mt-16 flex flex-col items-center gap-3 text-center text-muted-foreground">
           <Package className="size-12 opacity-40" />

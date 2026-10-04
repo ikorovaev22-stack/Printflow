@@ -1,3 +1,4 @@
+import { companyInitial } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/lib/types";
 
@@ -13,7 +14,7 @@ export function CompanyLogo({ company, className }: { company: Pick<Company, "na
         className,
       )}
     >
-      {company.name.replace(/[^\p{L}\p{N}]/gu, "").charAt(0).toUpperCase()}
+      {companyInitial(company.name)}
     </div>
   );
 }
