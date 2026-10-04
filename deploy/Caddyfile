@@ -1,0 +1,21 @@
+# HTTPS certificates are issued automatically (Let's Encrypt). DNS: A-records for DOMAIN and sb.DOMAIN → server IP.
+
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000 {
+		# The app's rate limits trust only this header
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+# Supabase through our own domain: REST, Auth, Storage and the Realtime websocket.
+# Browsers in Russia never contact *.supabase.co directly.
+sb.{$DOMAIN} {
+	reverse_proxy https://{$SUPABASE_HOST} {
+		header_up Host {upstream_hostport}
+		header_up -X-Forwarded-Host
+		transport http {
+			tls_server_name {$SUPABASE_HOST}
+		}
+	}
+}

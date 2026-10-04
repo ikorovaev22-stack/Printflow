@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { SITE_URL } from "@/lib/config";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,7 +55,10 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   const { data, error } = await supabase.auth.signUp({
     email: str(fd, "email"),
     password,
-    options: { data: { company_slug: slug, full_name: fullName, phone } },
+    options: {
+      data: { company_slug: slug, full_name: fullName, phone },
+      emailRedirectTo: SITE_URL ? `${SITE_URL}/c/${slug}` : undefined,
+    },
   });
   if (error) {
     return { error: error.code === "user_already_exists" ? "Этот email уже зарегистрирован" : "Не удалось зарегистрироваться" };

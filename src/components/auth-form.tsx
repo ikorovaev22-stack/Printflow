@@ -29,6 +29,11 @@ export function AuthForm({ mode, slug }: { mode: "login" | "register"; slug?: st
         maxLength={72}
         required
       />
+      {mode === "login" && (
+        <Link href={slug ? `/auth/forgot?slug=${slug}` : "/auth/forgot"} className="-mt-1 self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+          Забыли пароль?
+        </Link>
+      )}
       {state?.error && (
         <p role="alert" className="rounded-tile bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.error}
