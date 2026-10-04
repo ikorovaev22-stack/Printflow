@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import { getCompanyBySlug } from "@/lib/auth";
-import { companyInitial } from "@/lib/brand";
+import { companyInitial, logoSrc } from "@/lib/brand";
 
 export async function GET(req: Request, { params }: RouteContext<"/c/[slug]/app-icon/[size]">) {
   const { slug, size: raw } = await params;
@@ -10,6 +10,7 @@ export async function GET(req: Request, { params }: RouteContext<"/c/[slug]/app-
   const company = await getCompanyBySlug(slug);
   if (!company) notFound();
   const letter = companyInitial(company.name);
+  const logo = logoSrc(company);
   const inner = Math.round(size * (maskable ? 0.6 : 0.78));
 
   return new ImageResponse(
@@ -21,15 +22,15 @@ export async function GET(req: Request, { params }: RouteContext<"/c/[slug]/app-
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: company.logo_url ? "#ffffff" : company.brand_color,
+          background: logo ? "#ffffff" : company.brand_color,
           color: "#ffffff",
           fontSize: size * 0.5,
           fontWeight: 700,
         }}
       >
-        {company.logo_url ? (
+        {logo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={company.logo_url} width={inner} height={inner} style={{ objectFit: "contain" }} alt="" />
+          <img src={logo} width={inner} height={inner} style={{ objectFit: "contain" }} alt="" />
         ) : (
           letter
         )}

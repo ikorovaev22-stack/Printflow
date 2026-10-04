@@ -23,25 +23,28 @@ export async function saveOrder(_: FormState, fd: FormData): Promise<FormState> 
   };
   if (!order.client_id || !order.title) return { error: "Укажите клиента и название заказа" };
 
-  const { error } = id
-    ? await supabase.from("orders").update(order).eq("id", id)
-    : await supabase.from("orders").insert({ ...order, company_id: company.id });
-  if (error) return { error: "Не удалось сохранить заказ" };
+  const { data, error } = id
+    ? await supabase.from("orders").update(order).eq("id", id).select("id")
+    : await supabase.from("orders").insert({ ...order, company_id: company.id }).select("id");
+  if (error || !data?.length) return { error: "Не удалось сохранить заказ" };
 
   revalidatePath("/admin", "layout");
-  redirect(String(fd.get("back") || "/admin/orders"));
+  const back = String(fd.get("back") ?? "");
+  redirect(/^\/admin\/[\w/-]*$/.test(back) ? back : "/admin/orders");
 }
 
 export async function updateOrder(id: string, patch: { status?: OrderStatus; due_date?: string | null }) {
   const { supabase } = await requireStaff();
-  const { error } = await supabase.from("orders").update(patch).eq("id", id);
-  if (error) throw new Error("Не удалось обновить заказ");
+  const allowed = { ...("status" in patch && { status: patch.status }), ...("due_date" in patch && { due_date: patch.due_date }) };
+  const { data, error } = await supabase.from("orders").update(allowed).eq("id", id).select("id");
+  if (error || !data?.length) throw new Error("Не удалось обновить заказ");
   revalidatePath("/admin", "layout");
 }
 
 export async function deleteOrder(id: string) {
   const { supabase } = await requireStaff();
-  await supabase.from("orders").delete().eq("id", id);
+  const { data } = await supabase.from("orders").delete().eq("id", id).select("id");
+  if (!data?.length) throw new Error("Не удалось удалить заказ");
   revalidatePath("/admin", "layout");
   redirect("/admin/orders");
 }

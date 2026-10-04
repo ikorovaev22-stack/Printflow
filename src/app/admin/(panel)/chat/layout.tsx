@@ -1,3 +1,4 @@
+import { ChatShell } from "@/components/admin/chat-shell";
 import { DialogList, type Dialog } from "@/components/admin/dialog-list";
 import { requireStaff } from "@/lib/auth";
 import type { Message, Profile } from "@/lib/types";
@@ -27,14 +28,17 @@ export default async function ChatLayout({ children }: LayoutProps<"/admin/chat"
   }
 
   return (
-    <div className="grid h-[calc(100dvh-5rem)] grid-cols-[300px_1fr] overflow-hidden rounded-xl border bg-card md:h-[calc(100dvh-4rem)] lg:grid-cols-[340px_1fr]">
-      <aside className="flex min-h-0 flex-col border-r">
-        <h1 className="border-b px-4 py-4 text-xl font-semibold">Чат</h1>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <DialogList dialogs={[...dialogs.values()]} />
-        </div>
-      </aside>
-      <section className="flex min-h-0 flex-col bg-muted/30">{children}</section>
-    </div>
+    <ChatShell
+      list={
+        <>
+          <h1 className="border-b px-4 py-4 text-xl font-semibold">Чат</h1>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <DialogList dialogs={[...dialogs.values()]} />
+          </div>
+        </>
+      }
+    >
+      {children}
+    </ChatShell>
   );
 }

@@ -117,6 +117,23 @@ describe("RLS: company isolation", () => {
     assert.notEqual(comp.error, null);
   });
 
+  test("protected columns and roles cannot be forged", async () => {
+    const msg = await clientA.from("messages").insert({
+      company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: ctx.A.clientId, body: "x", read_at: new Date().toISOString(),
+    });
+    assert.notEqual(msg.error, null, "client sets read_at on insert");
+    const num = await staffA.from("orders").update({ number: 999 }).eq("id", ctx.A.orderId);
+    assert.notEqual(num.error, null, "staff changes order number");
+    const staffOrder = await staffA.from("orders").insert({ company_id: ctx.A.companyId, client_id: ctx.A.staffId, title: "x" });
+    assert.notEqual(staffOrder.error, null, "order for a staff profile");
+    const staffThread = await staffA.from("messages").insert({
+      company_id: ctx.A.companyId, client_id: ctx.A.staffId, sender_id: ctx.A.staffId, body: "x",
+    });
+    assert.notEqual(staffThread.error, null, "chat thread for a staff profile");
+    const logo = await admin.from("companies").update({ logo_url: "http://127.0.0.1/x.png" }).eq("id", ctx.A.companyId);
+    assert.notEqual(logo.error, null, "external logo_url");
+  });
+
   test("anonymous user cannot read orders, messages or profiles", async () => {
     for (const table of ["orders", "messages", "profiles"]) {
       const { data } = await anon.from(table).select("id");

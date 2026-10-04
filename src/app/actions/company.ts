@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import type { FormState } from "@/app/actions/auth";
+import { logoSrc } from "@/lib/brand";
 
 const opt = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim() || null;
 
@@ -14,7 +15,8 @@ export async function saveFaq(_: FormState, fd: FormData): Promise<FormState> {
 
   let error;
   if (id) {
-    ({ error } = await supabase.from("faqs").update(faq).eq("id", id));
+    const res = await supabase.from("faqs").update(faq).eq("id", id).select("id");
+    error = res.error ?? (res.data?.length ? null : new Error("not found"));
   } else {
     const { count } = await supabase
       .from("faqs")
@@ -29,7 +31,8 @@ export async function saveFaq(_: FormState, fd: FormData): Promise<FormState> {
 
 export async function deleteFaq(id: string) {
   const { supabase } = await requireStaff();
-  await supabase.from("faqs").delete().eq("id", id);
+  const { data } = await supabase.from("faqs").delete().eq("id", id).select("id");
+  if (!data?.length) throw new Error("Не удалось удалить вопрос");
   revalidatePath("/", "layout");
 }
 
@@ -52,13 +55,15 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
   if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: "Цвет должен быть в формате #RRGGBB" };
   const name = opt(fd, "name");
   if (!name) return { error: "Укажите название" };
+  const logoUrl = opt(fd, "logo_url");
+  if (logoUrl && !logoSrc({ id: company.id, logo_url: logoUrl })) return { error: "Недопустимый адрес логотипа" };
 
   const { error } = await supabase
     .from("companies")
     .update({
       name,
       brand_color: color,
-      logo_url: opt(fd, "logo_url"),
+      logo_url: logoUrl,
       phone: opt(fd, "phone"),
       email: opt(fd, "email"),
       address: opt(fd, "address"),
@@ -66,6 +71,12 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
     })
     .eq("id", company.id);
   if (error) return { error: "Не удалось сохранить" };
+
+  // Drop replaced/removed logo files
+  const { data: files } = await supabase.storage.from("logos").list(company.id);
+  const stale = (files ?? []).filter((f) => !logoUrl?.endsWith(`/${f.name}`)).map((f) => `${company.id}/${f.name}`);
+  if (stale.length) await supabase.storage.from("logos").remove(stale);
+
   revalidatePath("/", "layout");
   return { message: "Настройки сохранены" };
 }

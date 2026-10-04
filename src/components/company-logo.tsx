@@ -1,11 +1,12 @@
-import { companyInitial } from "@/lib/brand";
+import { companyInitial, logoSrc } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/lib/types";
 
-export function CompanyLogo({ company, className }: { company: Pick<Company, "name" | "logo_url">; className?: string }) {
-  if (company.logo_url) {
+export function CompanyLogo({ company, className }: { company: Pick<Company, "id" | "name" | "logo_url">; className?: string }) {
+  const src = logoSrc(company);
+  if (src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={company.logo_url} alt={company.name} className={cn("size-10 rounded-xl object-cover", className)} />;
+    return <img src={src} alt={company.name} className={cn("size-10 rounded-xl object-cover", className)} />;
   }
   return (
     <div

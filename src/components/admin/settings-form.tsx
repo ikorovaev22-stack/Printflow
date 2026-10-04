@@ -47,7 +47,7 @@ export function SettingsForm({ company }: { company: Company }) {
         <section className="flex flex-col gap-4">
           <h2 className="font-semibold">Бренд</h2>
           <div className="flex items-center gap-4">
-            <CompanyLogo company={{ name, logo_url: logo }} className="size-16 rounded-2xl text-2xl" />
+            <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-16 rounded-2xl text-2xl" />
             <div className="flex gap-2">
               <Button type="button" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
                 <ImageUp /> {uploading ? "Загрузка…" : "Загрузить логотип"}
@@ -105,7 +105,7 @@ export function SettingsForm({ company }: { company: Company }) {
         <div style={validColor ? brandStyle(color) : undefined} className="overflow-hidden rounded-[2rem] border-8 border-zinc-900 bg-muted/40 shadow-xl">
           <div className="flex items-center justify-between px-4 pt-5 pb-3">
             <span className="text-xl font-bold">Мои заказы</span>
-            <CompanyLogo company={{ name, logo_url: logo }} className="size-8 text-sm" />
+            <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-8 text-sm" />
           </div>
           <div className="mx-4 rounded-2xl bg-card p-3 shadow-sm">
             <p className="text-[10px] text-muted-foreground">Заказ №12</p>

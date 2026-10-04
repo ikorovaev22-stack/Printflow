@@ -33,5 +33,6 @@ export async function requireClient(slug: string) {
   if (!company) notFound();
   const session = await getSession();
   if (!session || session.company.id !== company.id) redirect(`/c/${slug}/login`);
+  if (session.profile.role !== "client") redirect("/admin/orders");
   return session;
 }
