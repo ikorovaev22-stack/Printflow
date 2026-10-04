@@ -14,6 +14,14 @@ import type { Faq } from "@/lib/types";
 export function FaqManager({ faqs }: { faqs: Faq[] }) {
   const [editing, setEditing] = useState<Faq | "new" | null>(null);
   const [pending, start] = useTransition();
+  const run = (fn: () => Promise<void>) =>
+    start(async () => {
+      try {
+        await fn();
+      } catch {
+        toast.error("Не удалось выполнить действие, обновите страницу");
+      }
+    });
 
   return (
     <>
@@ -31,10 +39,10 @@ export function FaqManager({ faqs }: { faqs: Faq[] }) {
               <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground">{f.answer}</p>
             </div>
             <div className="flex shrink-0 items-start gap-1">
-              <Button variant="ghost" size="icon" disabled={pending || i === 0} onClick={() => start(() => moveFaq(f.id, -1))} aria-label="Выше">
+              <Button variant="ghost" size="icon" disabled={pending || i === 0} onClick={() => run(() => moveFaq(f.id, -1))} aria-label="Выше">
                 <ArrowUp />
               </Button>
-              <Button variant="ghost" size="icon" disabled={pending || i === faqs.length - 1} onClick={() => start(() => moveFaq(f.id, 1))} aria-label="Ниже">
+              <Button variant="ghost" size="icon" disabled={pending || i === faqs.length - 1} onClick={() => run(() => moveFaq(f.id, 1))} aria-label="Ниже">
                 <ArrowDown />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setEditing(f)} aria-label="Изменить">
@@ -45,7 +53,7 @@ export function FaqManager({ faqs }: { faqs: Faq[] }) {
                 size="icon"
                 className="text-destructive"
                 disabled={pending}
-                onClick={() => confirm("Удалить вопрос?") && start(() => deleteFaq(f.id))}
+                onClick={() => confirm("Удалить вопрос?") && run(() => deleteFaq(f.id))}
                 aria-label="Удалить"
               >
                 <Trash2 />

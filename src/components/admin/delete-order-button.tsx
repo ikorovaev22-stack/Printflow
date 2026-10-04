@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { deleteOrder } from "@/app/actions/orders";
 import {
   AlertDialog,
@@ -30,7 +31,7 @@ export function DeleteOrderButton({ id }: { id: string }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Отмена</AlertDialogCancel>
-          <AlertDialogAction onClick={() => deleteOrder(id)} className="bg-destructive text-white hover:bg-destructive/90">
+          <AlertDialogAction onClick={() => deleteOrder(id).catch(() => toast.error("Не удалось удалить заказ"))} className="bg-destructive text-white hover:bg-destructive/90">
             Удалить
           </AlertDialogAction>
         </AlertDialogFooter>
