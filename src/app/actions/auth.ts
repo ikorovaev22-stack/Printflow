@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { SITE_URL } from "@/lib/config";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, limitIp, rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error?: string; message?: string } | undefined;
@@ -15,7 +15,7 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const slug = str(fd, "slug");
   const email = str(fd, "email").toLowerCase();
   const ip = await clientIp();
-  if (!rateLimit(`login:${ip}`, 10, 5 * 60_000) || !rateLimit(`login:${email}`, 20, 15 * 60_000)) return TOO_MANY;
+  if (!limitIp(ip, "login", 10, 5 * 60_000) || !rateLimit(`login:${email}`, 20, 15 * 60_000)) return TOO_MANY;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: String(fd.get("password") ?? "") });
   if (error) return { error: "Неверный email или пароль" };
@@ -49,7 +49,7 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   if (password.length < 8) return { error: "Пароль должен быть не короче 8 символов" };
   if (password.length > 72) return { error: "Пароль слишком длинный" };
   if (!fullName || fullName.length > 120 || phone.length > 40) return { error: "Проверьте имя и телефон" };
-  if (!rateLimit(`signup:${await clientIp()}`, 5, 60 * 60_000)) return TOO_MANY;
+  if (!limitIp(await clientIp(), "signup", 5, 60 * 60_000)) return TOO_MANY;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({

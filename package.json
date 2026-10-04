@@ -11,7 +11,8 @@
     "db:push": "sh -c 'set -a; . ./.env.local; supabase db push --db-url \"$DATABASE_URL\"'",
     "seed": "tsx scripts/seed.ts",
     "test:rls": "node --import tsx --test tests/rls.test.ts",
-    "create-company": "tsx scripts/create-company.ts"
+    "create-company": "tsx scripts/create-company.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -33,6 +34,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.2",

@@ -5,11 +5,15 @@ import { headers } from "next/headers";
 // per warm instance, and Supabase Auth's own rate limits stay in place behind it.
 const hits = new Map<string, number[]>();
 
+// x-real-ip is set by the proxy (Caddy, Vercel) and cannot be supplied by the client. Without a proxy the address
+// is unknown: per-IP limits are then skipped rather than putting every visitor into one shared bucket.
 export async function clientIp() {
   const h = await headers();
-  // x-real-ip is set by the proxy (Caddy, Vercel) and cannot be supplied by the client
-  return h.get("x-real-ip") || h.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  return h.get("x-real-ip") || h.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
 }
+
+export const limitIp = (ip: string | null, action: string, limit: number, windowMs: number) =>
+  !ip || rateLimit(`${action}:${ip}`, limit, windowMs);
 
 export function rateLimit(key: string, limit: number, windowMs: number) {
   const now = Date.now();

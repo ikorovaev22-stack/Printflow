@@ -3,13 +3,13 @@
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/actions/auth";
 import { SITE_URL } from "@/lib/config";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { clientIp, limitIp, rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requestPasswordReset(_: FormState, fd: FormData): Promise<FormState> {
   const email = String(fd.get("email") ?? "").trim().toLowerCase();
   if (!email) return { error: "Укажите email" };
-  if (!rateLimit(`reset:${await clientIp()}`, 5, 15 * 60_000) || !rateLimit(`reset:${email}`, 3, 15 * 60_000)) {
+  if (!limitIp(await clientIp(), "reset", 5, 15 * 60_000) || !rateLimit(`reset:${email}`, 3, 15 * 60_000)) {
     return { error: "Слишком много запросов. Попробуйте через 15 минут" };
   }
   const supabase = await createClient();
