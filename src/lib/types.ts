@@ -47,6 +47,7 @@ export type Message = {
   sender_id: string;
   body: string;
   read_at: string | null;
+  from_client: boolean;
   created_at: string;
 };
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarDays, ChevronRight, Package } from "lucide-react";
 import { CompanyLogo } from "@/components/company-logo";
 import { OrderProgress } from "@/components/client/order-timeline";
-import { RealtimeRefresh } from "@/components/client/realtime-refresh";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Screen } from "@/components/client/screen";
 import { StatusBadge } from "@/components/status-badge";
 import { requireClient } from "@/lib/auth";

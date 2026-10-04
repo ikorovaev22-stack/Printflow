@@ -1,15 +1,22 @@
 import { AppSidebar } from "@/components/admin/app-sidebar";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireStaff } from "@/lib/auth";
 import { brandStyle } from "@/lib/brand";
 
 export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
-  const { profile, company } = await requireStaff();
+  const { profile, company, supabase } = await requireStaff();
+  const { count } = await supabase
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("from_client", true)
+    .is("read_at", null);
   return (
     <TooltipProvider>
       <SidebarProvider style={brandStyle(company.brand_color)}>
-        <AppSidebar company={company} profile={profile} unread={0} />
+        <AppSidebar company={company} profile={profile} unread={count ?? 0} />
+        <RealtimeRefresh table="messages" filter={`company_id=eq.${company.id}`} />
         <SidebarInset>
           <header className="flex h-12 items-center border-b px-4 md:hidden">
             <SidebarTrigger />

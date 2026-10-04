@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, MapPin, MessageCircle, MessageSquareText, Store, Truck } from "lucide-react";
 import { OrderTimeline } from "@/components/client/order-timeline";
-import { RealtimeRefresh } from "@/components/client/realtime-refresh";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Screen } from "@/components/client/screen";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
