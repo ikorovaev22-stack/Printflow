@@ -47,7 +47,7 @@ test.describe("signed-in client", () => {
   });
 
   test("sends a chat message", async ({ page }) => {
-    await page.getByRole("link", { name: "Чат" }).click();
+    await page.getByRole("link", { name: "Чат", exact: true }).click();
     const text = `E2E ${Date.now()}`;
     await page.getByLabel("Сообщение").fill(text);
     await page.getByRole("button", { name: "Отправить" }).click();

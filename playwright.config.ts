@@ -7,6 +7,8 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
+    // A fresh client address per run keeps repeated runs under the per-IP sign-in limit
+    extraHTTPHeaders: { "x-real-ip": `198.51.100.${Math.floor(Math.random() * 254) + 1}` },
     locale: "ru-RU",
     trace: "retain-on-failure",
   },

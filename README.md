@@ -1,115 +1,155 @@
-# PrintFlow
+# PrintFlow — приложение для типографии
 
-MVP сервиса для типографий и копицентров. Клиент сам видит статус заказа и пишет в чат, а типография ведёт заказы в админке.
+Готовый шаблон: клиенты типографии сами видят статус и сроки заказов, присылают макеты и пишут менеджеру,
+а типография ведёт заказы в удобной панели. Клиентская часть — PWA: ставится на телефон как обычное приложение,
+в фирменном цвете и с логотипом типографии.
 
-- **Клиентское приложение** `/c/[slug]`: PWA, устроено как мобильное приложение и ставится на домашний экран. Есть заказы, карточка заказа со шкалой этапов, чат, FAQ, «О компании» и профиль.
-- **Админка** `/admin`: заказы (поиск, фильтр, смена статуса и срока прямо в таблице), клиенты, чат, FAQ и настройки бренда.
-- **Мультиарендность**: в каждой таблице есть `company_id`, изоляция сделана политиками RLS в Postgres.
+<p>
+  <img src="docs/screenshots/client-orders.png" width="24%" alt="Заказы клиента">
+  <img src="docs/screenshots/client-order.png" width="24%" alt="Карточка заказа">
+  <img src="docs/screenshots/client-chat.png" width="24%" alt="Чат с менеджером">
+  <img src="docs/screenshots/client-orders-dark.png" width="24%" alt="Тёмная тема">
+</p>
+<img src="docs/screenshots/admin-order.png" alt="Панель типографии: заказ, файлы и история этапов">
 
-**Продакшен:** https://printflow-beta-ten.vercel.app (клиент: `/c/demo`, админка: `/admin`).
+## Возможности
 
-Стек: Next.js 16 (App Router), TypeScript, Tailwind 4, shadcn/ui, Supabase (Postgres, Auth, Realtime, Storage), Vercel.
+**Для клиентов** (`/c/<адрес-типографии>`)
+- Заказы со статусом, сроком и способом получения; готовые заказы выделены
+- Этапы заказа с датой и временем каждого шага: Принят → Макет → Печать → Постпечать → Готов → Выдан
+- Файлы в заказе: клиент прикрепляет макет, типография присылает пробник на согласование (до 50 МБ)
+- Чат с менеджером в реальном времени, отметки о прочтении
+- Уведомления на телефон и по email: смена статуса, новый файл, ответ менеджера
+- Вопросы и ответы, контакты типографии (звонок, почта, маршрут), профиль
+- Регистрация, вход, восстановление пароля; светлая и тёмная тема; установка на экран «Домой»
 
-## Демо-доступы
+**Для типографии** (`/admin`)
+- Заказы: поиск, фильтры (включая просроченные), смена статуса и срока прямо в таблице, плитки с цифрами
+- Карточка заказа с файлами и историей этапов; клиенты и их заказы
+- Все диалоги чата, счётчик непрочитанных, уведомления сотрудникам о новых сообщениях и файлах
+- Вопросы и ответы для клиентов; настройки: название, логотип, фирменный цвет, контакты, часовой пояс
+- Роли: владелец (всё, включая настройки) и сотрудник
 
-Пароль у всех: `Demo1234!`
+**Под капотом**
+- Next.js 16, TypeScript, Tailwind CSS 4, shadcn/ui; Supabase (Postgres, Auth, Realtime, Storage)
+- Доступ к данным защищён на уровне базы (Row Level Security), покрыт автотестами
+- Два варианта запуска: Vercel за 10 минут или свой сервер в России (Docker), работающий без VPN
 
-| Роль | Email | Куда входить |
-|---|---|---|
-| Владелец (сотрудник) | `owner@printflow.demo` | `/admin/login` |
-| Клиент | `anna@printflow.demo` | `/c/demo/login` |
-| Клиент | `ivan@printflow.demo` | `/c/demo/login` |
-| Клиент | `olga@printflow.demo` | `/c/demo/login` |
+## Быстрый старт (на своём компьютере)
 
-Демо-типография: «Оттиск», slug `demo`. Новый клиент может зарегистрироваться сам на `/c/demo/register`.
-
-## Запуск локально
+Нужны Node.js 20+, Docker Desktop и Git.
 
 ```bash
 npm install
-cp .env.example .env.local   # заполнить (см. ниже)
-npm run db:push              # применить миграции из supabase/migrations
-npm run seed                 # демо-данные (сид можно запускать повторно, он пересоздаёт демо-компанию)
-npm run dev                  # http://localhost:3000
+npx supabase start          # локальная Supabase в Docker; в конце выведет ключи
+cp .env.example .env.local  # заполните из вывода: API URL, anon key, service_role key, DB URL
+npm run seed                # демо-типография «Оттиск»: 3 клиента, 10 заказов
+npm run dev                 # http://localhost:3000
 ```
 
-### Переменные окружения
+Демо-доступы (пароль у всех `Demo1234!`): клиент `anna@printflow.demo` → `/c/demo`, владелец `owner@printflow.demo` → `/admin`.
+Письма локально не уходят наружу — их видно в Mailpit: http://localhost:54324.
 
-| Переменная | Где взять | Где нужна |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API | приложение |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publishable / anon key | приложение |
-| `SUPABASE_SERVICE_ROLE_KEY` | secret / service_role key | только `seed` и `test:rls`, **на Vercel не нужна** |
-| `DATABASE_URL` | Database → Connection string → **Session pooler** | только `db:push` |
+## Установка для своей типографии
 
-Прямое подключение `db.<ref>.supabase.co` работает только по IPv6, поэтому для миграций используйте строку Session pooler (`aws-0-<region>.pooler.supabase.com:5432`).
+### 1. Supabase
 
-### Настройка проекта Supabase
+1. Создайте проект на [supabase.com](https://supabase.com) (регион — Frankfurt или ближайший).
+2. Заполните `.env.local` по образцу `.env.example` (ключи: Settings → API, строка подключения: Settings → Database → Session pooler).
+3. Примените схему базы: `npm run db:push`.
+4. **Authentication → URL Configuration**: Site URL — адрес вашего сайта (`https://app.example.ru`), в Redirect URLs добавьте `https://app.example.ru/**`.
+5. **Authentication → Email Templates**: вставьте HTML из `supabase/templates/confirmation.html` (Confirm signup) и `supabase/templates/recovery.html` (Reset password). Тогда ссылки из писем ведут на ваш домен, а не на `supabase.co`.
+6. **Authentication → Emails → SMTP Settings**: подключите свою почту (например, Яндекс 360). Встроенная почта Supabase отправляет всего несколько писем в час.
+7. **Authentication → Sign In / Providers → Email**: минимальная длина пароля — 8. «Confirm email» — на ваше усмотрение: включите, если хотите подтверждать почту клиентов.
+8. **Authentication → Rate Limits**: все запросы идут с адреса вашего сервера, поэтому при большом числе клиентов поднимите лимиты входа и обновления токенов.
 
-1. Authentication → Sign In / Providers → Email: **выключить «Confirm email»**. Email-уведомлений в MVP нет, клиент входит сразу после регистрации.
-2. Всё остальное создают миграции: таблицы, RLS, триггеры, публикация Realtime и bucket `logos`.
+### 2. Типография и владелец
 
-## Скрипты
+```bash
+npm run create-company -- --name "Типография «Оттиск»" --slug ottisk \
+  --email owner@ottisk.ru --password 'Надёжный-пароль' --owner "Мария Петрова" \
+  --phone "+7 (495) 123-45-67" --address "Москва, ул. Полиграфическая, 12" --color "#4f46e5"
+```
 
-| Команда | Что делает |
-|---|---|
-| `npm run dev` / `build` / `start` | Next.js |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint |
-| `npm run db:push` | применить миграции к БД из `DATABASE_URL` |
-| `npm run seed` | пересоздать демо-типографию |
-| `npm run test:rls` | тест изоляции компаний: клиент и сотрудник компании A не читают и не меняют данные компании B. Тест создаёт свои компании и удаляет их за собой |
+Логотип, цвет и контакты потом меняются в панели: `/admin/settings`. Клиенты регистрируются сами по ссылке
+`https://app.example.ru` (корень сайта ведёт в приложение вашей типографии).
 
-## Деплой на Vercel
+### 3а. Запуск на Vercel
 
-1. Залить репозиторий на GitHub и импортировать его в Vercel (Framework: Next.js, остальное по умолчанию).
-2. Environment Variables: `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-3. Регион функций должен совпадать с регионом Supabase. В `vercel.json` указан `dub1`, он подходит для Supabase `eu-west-1`. Для другого региона Supabase поменяйте значение, например `fra1` для `eu-central-1`. Иначе каждый запрос к БД будет идти через полконтинента.
-4. Deploy. Альтернатива без GitHub: `npx vercel deploy --prod` из папки проекта. `.vercelignore` не даёт загрузить локальные `.env*`.
+1. Импортируйте репозиторий в Vercel.
+2. Добавьте переменные окружения из `.env.example` (кроме `DATABASE_URL`). `SUPABASE_SERVICE_ROLE_KEY` нужен для уведомлений.
+3. Deploy. Готово.
 
-## Установка на телефон
+> ⚠️ В России Vercel и `supabase.co` частично заблокированы: без VPN сайт может не открываться. Для клиентов в РФ используйте вариант 3б.
 
-Откройте `https://<домен>/c/demo` на телефоне:
-- **iPhone (Safari):** «Поделиться» → «На экран Домой».
-- **Android (Chrome):** баннер «Установить приложение» на экране заказов или меню ⋮ → «Установить приложение».
+### 3б. Свой сервер в России (Selectel, Timeweb и т. п.)
 
-У каждой типографии свой манифест (`/c/[slug]/manifest.webmanifest`): название, иконка из логотипа или первой буквы на фирменном цвете. Приложение открывается без адресной строки (`display: standalone`). Нужен HTTPS (на Vercel он есть сразу).
+Сервер: 2 vCPU / 2 ГБ / Ubuntu 24.04 (у Selectel — VDS 2-2-40, ~400 ₽/мес). Браузеры клиентов обращаются только к вашему
+домену: Caddy выпускает HTTPS-сертификаты и проксирует Supabase (включая realtime-чат) через `sb.<ваш-домен>`.
 
-## Новая типография (пока без UI)
-
-1. Создать компанию в SQL Editor:
-   ```sql
-   insert into companies (name, slug, brand_color, phone, address, work_hours)
-   values ('Копицентр «Пример»', 'primer', '#2563eb', '+7 ...', 'Адрес', 'Пн–Пт 9–19');
+1. В DNS добавьте две A-записи на IP сервера: `app.example.ru` и `sb.app.example.ru`.
+2. Установите Docker: `curl -fsSL https://get.docker.com | sh`.
+3. На сервере:
+   ```bash
+   git clone <ваш-репозиторий> printflow && cd printflow/deploy
+   cp .env.example .env && nano .env      # домен, ключи Supabase, VAPID, SMTP
+   docker compose up -d --build
    ```
-2. Зарегистрировать владельца на `/c/primer/register`, затем повысить ему роль:
-   ```sql
-   update profiles set role = 'owner' where email = 'boss@primer.ru';
-   ```
-   Для обычного сотрудника нужна роль `staff`: у него есть доступ ко всей админке, кроме настроек.
+4. В Supabase (шаг 1.4) Site URL — `https://app.example.ru`.
 
-## Устройство
+Обновление: `git pull && docker compose up -d --build`. Логи: `docker compose logs -f app`.
+
+## Уведомления
+
+- **Push на телефон и компьютер.** Сгенерируйте ключи `npx web-push generate-vapid-keys` и заполните `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
+  `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`; также нужен `SUPABASE_SERVICE_ROLE_KEY`. Клиент включает уведомления в профиле,
+  сотрудник — кнопкой с колокольчиком внизу меню. На iPhone push работает после установки приложения на экран «Домой» (iOS 16.4+).
+- **Email клиентам** о новых заказах, смене статуса и файлах от типографии: заполните `SMTP_*`.
+- Без ключей уведомления просто выключены, всё остальное работает.
+
+## Настройка под себя
+
+- **Бренд**: логотип, фирменный цвет, контакты и часовой пояс — в `/admin/settings`. Название продукта во вкладке — `NEXT_PUBLIC_APP_NAME`.
+- **Дизайн**: правила и токены — в [DESIGN.md](DESIGN.md), цвета — в `src/app/globals.css`. Фирменный цвет компании используется как акцент, основные кнопки тёмные.
+- **Этапы заказа**: подписи и цвета — `STATUSES` в `src/lib/types.ts` (набор этапов задан enum `order_status` в миграциях).
+- **Демо-стенд**: `DEMO_MODE=true` показывает на главной лендинг продукта с демо-доступами.
+
+## Проверки
+
+```bash
+npm run typecheck && npm run lint
+npm run test:rls     # изоляция данных между типографиями и ролями (на локальной Supabase)
+npm run test:e2e     # сценарии в браузере: npx playwright install chromium; приложение на :3000 с демо-данными
+```
+
+## Безопасность
+
+- Все запросы идут под сессией пользователя, доступ к строкам решают политики RLS в Postgres: клиент видит только свои заказы,
+  файлы и переписку, сотрудник — только свою типографию.
+- Служебный ключ Supabase используется только на сервере — для рассылки уведомлений после проверенного действия, в скриптах и тестах.
+- Ограничения: лимит попыток входа, регистрации и восстановления пароля; не больше 20 сообщений в минуту; лимиты длины полей;
+  файлы до 50 МБ в приватном хранилище со ссылками на скачивание на 2 минуты.
+- Заголовки Content-Security-Policy, Permissions-Policy, X-Frame-Options; HTTPS обязателен.
+
+## Устройство проекта
 
 ```
-supabase/migrations/   схема, RLS, триггеры, storage
-scripts/seed.ts        демо-данные
-tests/rls.test.ts      тест изоляции компаний
-src/proxy.ts           обновление сессии, редиректы на вход
-src/lib/auth.ts        getSession / requireStaff / requireClient
-src/app/c/[slug]/      клиентское приложение (PWA)
-src/app/admin/         админка
-src/app/actions/       server actions
-src/components/chat.tsx  общий realtime-чат для клиента и сотрудника
+supabase/migrations/     схема, RLS, триггеры, хранилища
+supabase/templates/      письма подтверждения и восстановления пароля
+scripts/                 create-company (новая типография), seed (демо-данные)
+deploy/                  docker-compose и Caddy для своего сервера
+src/app/c/[slug]/        клиентское приложение (PWA)
+src/app/admin/           панель типографии
+src/app/auth/            подтверждение email, восстановление пароля
+src/app/actions/         серверные действия
+src/lib/notify.ts        push и email уведомления
+tests/                   тест RLS и e2e-тесты (Playwright)
 ```
 
-Все запросы идут под сессией пользователя (anon key + JWT), изоляцию данных обеспечивает RLS. Service role используется только в сиде и тесте.
+## Ограничения
 
-## Известные ограничения MVP
-
-- Один email соответствует одному аккаунту в одной типографии. Чтобы стать клиентом второй типографии, нужен другой email.
-- Сотрудник, открывший клиентское приложение `/c/[slug]`, перенаправляется в админку.
-- Из-за потоковой отрисовки (`loading.tsx`) страницы «не найдено» внутри приложения и админки отдают HTTP 200, а не 404.
-- Realtime: при удалении заказа Supabase рассылает id удалённой строки всем подписчикам таблицы, RLS к событиям DELETE не применяется. Содержимое заказов при этом не утекает.
-- Логотип хранится только в bucket `logos` в папке своей компании: это проверяют ограничение в БД и сервер. Внешние URL не отображаются и не загружаются.
-
-Что вне MVP — в [ROADMAP.md](ROADMAP.md).
+- Один email — один аккаунт в одной типографии.
+- Сотрудник, открывший клиентское приложение, попадает в панель.
+- Лимит попыток входа хранится в памяти процесса: на своём сервере работает полностью, на Vercel — в пределах экземпляра функции
+  (за ним остаются лимиты Supabase Auth).
+- Нет онлайн-оплаты и офлайн-режима — см. [ROADMAP.md](ROADMAP.md).
