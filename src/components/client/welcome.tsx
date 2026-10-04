@@ -16,7 +16,7 @@ export function Welcome({
 }) {
   return (
     <main className="min-h-dvh">
-      <section className="relative flex min-h-[34dvh] flex-col items-center justify-end gap-4 overflow-hidden rounded-b-[2.5rem] bg-primary px-6 pt-[max(env(safe-area-inset-top),2.5rem)] pb-10 text-center text-primary-foreground">
+      <section className="relative flex min-h-[34dvh] flex-col items-center justify-end gap-4 overflow-hidden rounded-b-[2.5rem] bg-hero px-6 pt-[max(env(safe-area-inset-top),2.5rem)] pb-10 text-center text-hero-foreground">
         <Halftone className="-top-16 -right-16 size-80" />
         <Halftone className="-bottom-24 -left-20 size-72" />
         <span className="relative rounded-full bg-white p-1.5">

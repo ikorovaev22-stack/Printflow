@@ -102,7 +102,7 @@ export function Chat({ clientId, side, initialMessages, empty }: Props) {
                 )}
               >
                 <p className="break-words whitespace-pre-wrap">{m.body}</p>
-                <p className={cn("mt-1 flex items-center justify-end gap-1 text-[11px] tabular-nums", mine ? "text-white/60" : "text-muted-foreground")}>
+                <p className={cn("mt-1 flex items-center justify-end gap-1 text-[11px] tabular-nums", mine ? "text-primary-foreground/60" : "text-muted-foreground")}>
                   {formatChatTime(m.created_at, timeZone)}
                   {mine &&
                     (m.read_at ? (

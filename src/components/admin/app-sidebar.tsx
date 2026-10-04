@@ -6,6 +6,7 @@ import { CircleHelp, LogOut, MessagesSquare, Package, Settings, Users } from "lu
 import { CompanyLogo } from "@/components/company-logo";
 import { PushButton } from "@/components/push-toggle";
 import { SignOutForm } from "@/components/sign-out-form";
+import { ThemeButton } from "@/components/theme";
 import {
   Sidebar,
   SidebarContent,
@@ -73,20 +74,25 @@ export function AppSidebar({ company, profile, unread }: { company: Company; pro
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-3">
-        <div className="flex items-center gap-3 rounded-card bg-muted p-2 pl-2.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card text-xs font-semibold">
-            {initials(profile.full_name)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{profile.full_name}</p>
-            <p className="text-xs text-muted-foreground">{profile.role === "owner" ? "Владелец" : "Сотрудник"}</p>
+        <div className="rounded-card bg-muted p-2">
+          <div className="flex items-center gap-3 p-0.5">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card text-xs font-semibold">
+              {initials(profile.full_name)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{profile.full_name}</p>
+              <p className="text-xs text-muted-foreground">{profile.role === "owner" ? "Владелец" : "Сотрудник"}</p>
+            </div>
           </div>
-          <PushButton />
-          <SignOutForm>
-            <SidebarMenuButton type="submit" className="size-9 justify-center rounded-full p-0 hover:bg-card" aria-label="Выйти" title="Выйти">
-              <LogOut />
-            </SidebarMenuButton>
-          </SignOutForm>
+          <div className="mt-2 flex items-center gap-1 border-t border-border/60 pt-2">
+            <ThemeButton />
+            <PushButton />
+            <SignOutForm className="ml-auto">
+              <SidebarMenuButton type="submit" className="size-9 justify-center rounded-full p-0 hover:bg-card" aria-label="Выйти" title="Выйти">
+                <LogOut />
+              </SidebarMenuButton>
+            </SignOutForm>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>

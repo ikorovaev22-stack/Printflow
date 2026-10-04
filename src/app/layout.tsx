@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Onest, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_NAME } from "@/lib/config";
 import "./globals.css";
@@ -16,15 +17,20 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f3f3f5",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f3f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f10" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className={`${onest.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="ru" suppressHydrationWarning className={`${onest.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
-        {children}
-        <Toaster position="top-center" />
+        <ThemeProvider>
+          {children}
+          <Toaster position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

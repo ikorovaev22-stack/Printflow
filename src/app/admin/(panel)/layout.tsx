@@ -15,7 +15,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
     .is("read_at", null);
   return (
     <TooltipProvider>
-      <SidebarProvider style={brandStyle(company.brand_color)}>
+      <SidebarProvider style={brandStyle(company.brand_color)} className="brand-scope">
         <AppSidebar company={company} profile={profile} unread={count ?? 0} />
         <RealtimeRefresh table="messages" filter={`company_id=eq.${company.id}`} />
         <SidebarInset>

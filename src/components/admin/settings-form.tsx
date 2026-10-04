@@ -142,7 +142,7 @@ export function SettingsForm({ company }: { company: Company }) {
         <p className="mb-3 text-sm font-medium text-muted-foreground">Предпросмотр приложения</p>
         <div
           style={validColor ? brandStyle(color) : undefined}
-          className="overflow-hidden rounded-[2.5rem] border-[10px] border-primary bg-background pb-4"
+          className="brand-scope overflow-hidden rounded-[2.5rem] border-[10px] border-primary bg-background pb-4"
         >
           <div className="flex items-center gap-2.5 px-4 pt-5">
             <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-9 rounded-full text-sm" />
@@ -150,7 +150,7 @@ export function SettingsForm({ company }: { company: Company }) {
           </div>
           <p className="mt-4 px-4 text-xs text-muted-foreground">Добрый день, Анна</p>
           <p className="px-4 text-xl font-bold tracking-tight">Ваши заказы</p>
-          <div className="mx-4 mt-3 rounded-[1.25rem] bg-primary p-4 text-primary-foreground">
+          <div className="mx-4 mt-3 rounded-[1.25rem] bg-hero p-4 text-hero-foreground">
             <p className="text-[10px] text-white/60">Заказ №12</p>
             <p className="text-sm font-semibold">Визитки 500 шт.</p>
             <div className="mt-3 flex gap-1">

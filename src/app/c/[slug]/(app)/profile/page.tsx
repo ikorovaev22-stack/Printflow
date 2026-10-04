@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight, LogOut, Store } from "lucide-react";
 import { ProfileForm } from "@/components/client/profile-form";
 import { PushToggle } from "@/components/push-toggle";
+import { ThemeSwitch } from "@/components/theme";
 import { SignOutForm } from "@/components/sign-out-form";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { requireClient } from "@/lib/auth";
@@ -28,8 +29,11 @@ export default async function ProfileScreen({ params }: PageProps<"/c/[slug]/pro
       <SectionTitle>Личные данные</SectionTitle>
       <ProfileForm profile={profile} />
 
-      <SectionTitle>Уведомления</SectionTitle>
-      <PushToggle />
+      <SectionTitle>Уведомления и тема</SectionTitle>
+      <div className="flex flex-col gap-2">
+        <PushToggle />
+        <ThemeSwitch />
+      </div>
 
       <SectionTitle>Ещё</SectionTitle>
       <div className="flex flex-col gap-2">

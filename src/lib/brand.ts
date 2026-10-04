@@ -1,15 +1,21 @@
 import type { CSSProperties } from "react";
 
-function isLight(hex: string) {
+function luminance(hex: string) {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.6;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-// The company color is an accent (progress, current step, unread dots); primary actions stay ink per DESIGN.md
+// The company color is an accent (progress, current step, logo tile); primary actions stay ink per DESIGN.md.
+// Pair with className "brand-scope". Near-black brands switch to near-white in dark mode so they stay visible.
 export function brandStyle(color: string): CSSProperties {
+  const l = luminance(color);
+  const dark = l < 0.12 ? "#f5f5f7" : color;
+  const fg = (c: string) => (luminance(c) > 0.6 ? "#1c1c1e" : "#ffffff");
   return {
-    "--brand": color,
-    "--brand-foreground": isLight(color) ? "#1c1c1e" : "#ffffff",
+    "--brand-l": color,
+    "--brand-l-fg": fg(color),
+    "--brand-d": dark,
+    "--brand-d-fg": fg(dark),
   } as CSSProperties;
 }
 

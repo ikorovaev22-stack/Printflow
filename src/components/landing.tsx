@@ -23,7 +23,7 @@ export function Landing() {
           </Button>
         </header>
 
-        <section className="relative mt-6 overflow-hidden rounded-[2rem] bg-primary px-6 py-14 text-primary-foreground md:px-14 md:py-20">
+        <section className="relative mt-6 overflow-hidden rounded-[2rem] bg-hero px-6 py-14 text-hero-foreground md:px-14 md:py-20">
           <Halftone className="-top-24 -right-24 size-[30rem]" />
           <Halftone className="-bottom-40 left-1/3 size-96" />
           <p className="relative inline-flex h-9 items-center rounded-full bg-white/12 px-4 text-sm backdrop-blur-md">

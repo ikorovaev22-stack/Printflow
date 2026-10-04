@@ -124,12 +124,12 @@ function FeaturedCard({ slug, order }: { slug: string; order: Order }) {
   return (
     <Link
       href={`/c/${slug}/orders/${order.id}`}
-      className="group relative flex flex-col gap-6 overflow-hidden rounded-card bg-primary p-5 text-primary-foreground transition-transform active:scale-98 motion-reduce:active:scale-100"
+      className="group relative flex flex-col gap-6 overflow-hidden rounded-card bg-hero p-5 text-hero-foreground transition-transform active:scale-98 motion-reduce:active:scale-100"
     >
       <Halftone />
       <div className="relative flex items-start justify-between gap-3">
         <StatusBadge status={order.status} tone="glass" />
-        <span className="flex size-11 items-center justify-center rounded-full bg-white text-primary transition-transform group-hover:rotate-45 motion-reduce:transition-none">
+        <span className="flex size-11 items-center justify-center rounded-full bg-white text-hero transition-transform group-hover:rotate-45 motion-reduce:transition-none">
           <ArrowUpRight className="size-5" />
         </span>
       </div>

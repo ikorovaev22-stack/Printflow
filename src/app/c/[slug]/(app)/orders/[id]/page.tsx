@@ -38,7 +38,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
       <section
         className={cn(
           "relative flex flex-col gap-6 overflow-hidden rounded-card p-6",
-          ready ? "bg-lime text-lime-foreground" : "bg-primary text-primary-foreground",
+          ready ? "bg-lime text-lime-foreground" : "bg-hero text-hero-foreground",
         )}
       >
         {!ready && <Halftone />}
