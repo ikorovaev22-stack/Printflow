@@ -6,6 +6,8 @@ MVP сервиса для типографий и копицентров. Кли
 - **Админка** `/admin`: заказы (поиск, фильтр, смена статуса и срока прямо в таблице), клиенты, чат, FAQ и настройки бренда.
 - **Мультиарендность**: в каждой таблице есть `company_id`, изоляция сделана политиками RLS в Postgres.
 
+**Продакшен:** https://printflow-beta-ten.vercel.app (клиент: `/c/demo`, админка: `/admin`).
+
 Стек: Next.js 16 (App Router), TypeScript, Tailwind 4, shadcn/ui, Supabase (Postgres, Auth, Realtime, Storage), Vercel.
 
 ## Демо-доступы
@@ -63,7 +65,7 @@ npm run dev                  # http://localhost:3000
 1. Залить репозиторий на GitHub и импортировать его в Vercel (Framework: Next.js, остальное по умолчанию).
 2. Environment Variables: `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 3. Регион функций должен совпадать с регионом Supabase. В `vercel.json` указан `dub1`, он подходит для Supabase `eu-west-1`. Для другого региона Supabase поменяйте значение, например `fra1` для `eu-central-1`. Иначе каждый запрос к БД будет идти через полконтинента.
-4. Deploy. Альтернатива без GitHub: `npx vercel` и затем `npx vercel --prod`.
+4. Deploy. Альтернатива без GitHub: `npx vercel deploy --prod` из папки проекта. `.vercelignore` не даёт загрузить локальные `.env*`.
 
 ## Установка на телефон
 
