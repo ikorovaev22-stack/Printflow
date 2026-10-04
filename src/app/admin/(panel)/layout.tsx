@@ -18,10 +18,10 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
         <AppSidebar company={company} profile={profile} unread={count ?? 0} />
         <RealtimeRefresh table="messages" filter={`company_id=eq.${company.id}`} />
         <SidebarInset>
-          <header className="flex h-12 items-center border-b px-4 md:hidden">
+          <header className="flex h-14 items-center gap-2 bg-card px-4 md:hidden">
             <SidebarTrigger />
           </header>
-          <div className="mx-auto w-full max-w-6xl p-4 md:p-8">{children}</div>
+          <div className="mx-auto w-full max-w-6xl p-4 md:p-10">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

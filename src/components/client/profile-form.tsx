@@ -16,16 +16,16 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   }, [state]);
 
   return (
-    <form action={action} className="flex flex-col gap-4 rounded-3xl bg-card p-5">
+    <form action={action} className="flex flex-col gap-4 rounded-card bg-card p-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor="full_name">Имя</Label>
-        <Input id="full_name" name="full_name" defaultValue={profile.full_name} className="h-11" />
+        <Input id="full_name" name="full_name" defaultValue={profile.full_name} className="bg-muted border-transparent" />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="phone">Телефон</Label>
-        <Input id="phone" name="phone" type="tel" defaultValue={profile.phone ?? ""} className="h-11" />
+        <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={profile.phone ?? ""} className="bg-muted border-transparent" />
       </div>
-      <Button type="submit" variant="secondary" className="h-11" disabled={pending}>
+      <Button type="submit" size="lg" className="mt-1 w-full" disabled={pending}>
         {pending ? "Сохранение…" : "Сохранить"}
       </Button>
     </form>

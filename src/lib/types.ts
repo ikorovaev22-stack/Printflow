@@ -53,13 +53,13 @@ export type Message = {
 
 export type Faq = { id: string; company_id: string; question: string; answer: string; position: number };
 
-export const STATUSES: { value: OrderStatus; label: string; className: string }[] = [
-  { value: "accepted", label: "Принят", className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200" },
-  { value: "design", label: "Макет", className: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300" },
-  { value: "printing", label: "Печать", className: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
-  { value: "finishing", label: "Постпечать", className: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
-  { value: "ready", label: "Готов", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" },
-  { value: "delivered", label: "Выдан", className: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" },
+export const STATUSES: { value: OrderStatus; label: string; dot: string }[] = [
+  { value: "accepted", label: "Принят", dot: "bg-zinc-400" },
+  { value: "design", label: "Макет", dot: "bg-violet-500" },
+  { value: "printing", label: "Печать", dot: "bg-sky-500" },
+  { value: "finishing", label: "Постпечать", dot: "bg-amber-500" },
+  { value: "ready", label: "Готов", dot: "bg-lime-500" },
+  { value: "delivered", label: "Выдан", dot: "bg-zinc-300" },
 ];
 
 export const statusMeta = (s: OrderStatus) => STATUSES.find((x) => x.value === s)!;

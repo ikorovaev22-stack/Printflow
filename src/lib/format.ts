@@ -20,3 +20,12 @@ export function formatChatTime(d: string) {
 
 export const toISODate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const hour = new Intl.DateTimeFormat("ru-RU", { hour: "numeric", hourCycle: "h23", timeZone });
+export function greeting() {
+  const h = Number(hour.format(new Date()));
+  return h < 5 ? "Доброй ночи" : h < 12 ? "Доброе утро" : h < 18 ? "Добрый день" : "Добрый вечер";
+}
+
+export const initials = (name: string) =>
+  name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";

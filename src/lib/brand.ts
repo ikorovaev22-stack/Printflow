@@ -5,12 +5,11 @@ function isLight(hex: string) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.6;
 }
 
+// The company color is an accent (progress, current step, unread dots); primary actions stay ink per DESIGN.md
 export function brandStyle(color: string): CSSProperties {
   return {
     "--brand": color,
-    "--primary": color,
-    "--primary-foreground": isLight(color) ? "#0a0a0a" : "#ffffff",
-    "--ring": color,
+    "--brand-foreground": isLight(color) ? "#1c1c1e" : "#ffffff",
   } as CSSProperties;
 }
 

@@ -1,55 +1,97 @@
 import Link from "next/link";
-import { ArrowRight, MessageCircle, MonitorSmartphone, Package, Palette, PhoneOff, Smartphone } from "lucide-react";
+import { ArrowUpRight, MessageCircle, MonitorSmartphone, Palette, Smartphone, Timer } from "lucide-react";
+import { Halftone } from "@/components/client/halftone";
 import { Button } from "@/components/ui/button";
+import { STATUSES } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const features = [
+  { icon: Timer, title: "Статусы и сроки", text: "Клиент видит этап и дату готовности сразу, как вы их меняете." },
+  { icon: MessageCircle, title: "Чат с менеджером", text: "Вопросы по макету и доставке — в одном окне, без мессенджеров." },
+  { icon: Palette, title: "Ваш бренд", text: "Логотип, фирменный цвет и контакты. Иконка на домашнем экране." },
+];
 
 export default function Landing() {
   return (
-    <main className="min-h-dvh bg-gradient-to-b from-indigo-50 to-white dark:from-indigo-950/40 dark:to-background">
-      <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
-          <PhoneOff className="size-4" /> Меньше звонков «Где мой заказ?»
-        </div>
-        <h1 className="max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
-          PrintFlow — клиенты сами видят статус заказа
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-          Приложение для клиентов типографии в вашем бренде: статус и срок готовности, способ получения и чат с менеджером.
-          Ставится на телефон как обычное приложение.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild size="lg" className="h-12 bg-indigo-600 px-6 text-base hover:bg-indigo-700">
-            <Link href="/c/demo">
-              <Smartphone /> Приложение клиента
-            </Link>
+    <main className="min-h-dvh">
+      <div className="mx-auto max-w-6xl px-5 py-6 md:px-8">
+        <header className="flex items-center justify-between">
+          <span className="text-lg font-bold tracking-tight">PrintFlow</span>
+          <Button asChild variant="surface">
+            <Link href="/admin">Войти в панель</Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
-            <Link href="/admin">
-              <MonitorSmartphone /> Панель типографии <ArrowRight />
-            </Link>
-          </Button>
-        </div>
+        </header>
 
-        <div className="mt-16 grid gap-4 md:grid-cols-3">
-          {[
-            { icon: Package, title: "Статусы заказов", text: "Принят → Макет → Печать → Постпечать → Готов → Выдан. Клиент видит изменения сразу." },
-            { icon: MessageCircle, title: "Чат в реальном времени", text: "Вопросы по макету и срокам — в одном окне, без мессенджеров и звонков." },
-            { icon: Palette, title: "Ваш бренд", text: "Логотип, фирменный цвет и контакты типографии. Иконка на домашнем экране." },
-          ].map((f) => (
-            <div key={f.title} className="rounded-2xl border bg-card p-6 shadow-sm">
-              <f.icon className="mb-3 size-6 text-indigo-600" />
-              <h2 className="font-semibold">{f.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{f.text}</p>
+        <section className="relative mt-6 overflow-hidden rounded-[2rem] bg-primary px-6 py-14 text-primary-foreground md:px-14 md:py-20">
+          <Halftone className="-top-24 -right-24 size-[30rem]" />
+          <Halftone className="-bottom-40 left-1/3 size-96" />
+          <p className="relative inline-flex h-9 items-center rounded-full bg-white/12 px-4 text-sm backdrop-blur-md">
+            Меньше звонков «Где мой заказ?»
+          </p>
+          <h1 className="relative mt-6 max-w-3xl text-4xl leading-[1.05] font-bold tracking-tight md:text-6xl">
+            Клиенты типографии сами видят статус заказа
+          </h1>
+          <p className="relative mt-5 max-w-xl text-lg text-white/60">
+            Приложение в вашем бренде: этап и срок готовности, способ получения и чат с менеджером. Ставится на телефон как обычное.
+          </p>
+          <div className="relative mt-10 flex flex-wrap gap-3">
+            <Button asChild size="lg" variant="lime">
+              <Link href="/c/demo">
+                <Smartphone data-icon="inline-start" /> Приложение клиента
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="glass">
+              <Link href="/admin">
+                <MonitorSmartphone data-icon="inline-start" /> Панель типографии
+              </Link>
+            </Button>
+          </div>
+        </section>
+
+        <section aria-label="Этапы заказа" className="mt-3 flex flex-wrap gap-2 rounded-card bg-card p-4">
+          {STATUSES.map((s, i) => (
+            <span
+              key={s.value}
+              className={cn(
+                "inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium",
+                s.value === "ready" ? "bg-lime text-lime-foreground" : "bg-muted",
+              )}
+            >
+              <span aria-hidden className={cn("size-2 rounded-full", s.value === "ready" ? "bg-lime-foreground" : s.dot)} />
+              {i + 1}. {s.label}
+            </span>
+          ))}
+        </section>
+
+        <section className="mt-3 grid gap-3 md:grid-cols-3">
+          {features.map((f) => (
+            <div key={f.title} className="flex flex-col gap-6 rounded-card bg-card p-6">
+              <span className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <f.icon className="size-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold">{f.title}</h2>
+                <p className="mt-1 text-muted-foreground">{f.text}</p>
+              </div>
             </div>
           ))}
-        </div>
+        </section>
 
-        <div className="mt-12 rounded-2xl border border-dashed bg-card/60 p-6 text-sm">
-          <p className="mb-2 font-semibold">Демо-доступы (пароль у всех: Demo1234!)</p>
-          <ul className="grid gap-1 text-muted-foreground md:grid-cols-2">
-            <li>Сотрудник: <span className="font-mono text-foreground">owner@printflow.demo</span></li>
-            <li>Клиент: <span className="font-mono text-foreground">anna@printflow.demo</span></li>
-          </ul>
-        </div>
+        <section className="mt-3 flex flex-col justify-between gap-4 rounded-card bg-card p-6 md:flex-row md:items-center">
+          <div>
+            <p className="font-semibold">Демо-доступы</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Сотрудник <span className="font-medium text-foreground">owner@printflow.demo</span> · клиент{" "}
+              <span className="font-medium text-foreground">anna@printflow.demo</span> · пароль{" "}
+              <span className="font-medium text-foreground">Demo1234!</span>
+            </p>
+          </div>
+          <Button asChild size="lg">
+            <Link href="/c/demo">
+              Открыть демо <ArrowUpRight data-icon="inline-end" />
+            </Link>
+          </Button>
+        </section>
       </div>
     </main>
   );

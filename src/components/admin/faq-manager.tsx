@@ -30,10 +30,10 @@ export function FaqManager({ faqs }: { faqs: Faq[] }) {
           <Plus /> Добавить вопрос
         </Button>
       </div>
-      {!faqs.length && <div className="rounded-xl border border-dashed p-12 text-center text-sm text-muted-foreground">Вопросов пока нет</div>}
+      {!faqs.length && <p className="rounded-card border-2 border-dashed p-12 text-center text-muted-foreground">Вопросов пока нет</p>}
       <ul className="flex flex-col gap-3">
         {faqs.map((f, i) => (
-          <li key={f.id} className="flex gap-4 rounded-xl border bg-card p-5">
+          <li key={f.id} className="flex gap-4 rounded-card bg-card p-6">
             <div className="min-w-0 flex-1">
               <p className="font-medium">{f.question}</p>
               <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground">{f.answer}</p>

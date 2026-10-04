@@ -29,7 +29,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
     <>
       <PageHeader title="Клиенты" description={`Всего: ${clients.length}`} />
       <OrdersToolbar withStatus={false} />
-      <div className="overflow-hidden rounded-xl border bg-card">
+      <div className="overflow-hidden rounded-card bg-card">
         <Table>
           <TableHeader>
             <TableRow>

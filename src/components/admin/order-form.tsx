@@ -16,7 +16,7 @@ export function OrderForm({ order, clients, clientId, back }: Props) {
   const [delivery, setDelivery] = useState(order?.delivery_method ?? "pickup");
 
   return (
-    <form action={action} className="grid gap-5 rounded-xl border bg-card p-6 md:grid-cols-2">
+    <form action={action} className="grid gap-5 rounded-card bg-card p-6 md:grid-cols-2">
       {order && <input type="hidden" name="id" value={order.id} />}
       <input type="hidden" name="back" value={back} />
       <Field label="Клиент" className="md:col-span-2">

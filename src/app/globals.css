@@ -39,6 +39,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-lime: var(--lime);
+  --color-lime-foreground: var(--lime-foreground);
+  --radius-tile: 1rem;
+  --radius-card: 1.5rem;
+  --shadow-float: 0 10px 30px -8px rgb(28 28 30 / 0.14), 0 2px 8px rgb(28 28 30 / 0.04);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,7 +56,7 @@
 }
 
 :root {
-  --background: #f7f7f7;
+  --background: #f3f3f5;
   --foreground: #1c1c1e;
   --card: #ffffff;
   --card-foreground: #1c1c1e;
@@ -57,30 +64,34 @@
   --popover-foreground: #1c1c1e;
   --primary: #1c1c1e;
   --primary-foreground: #ffffff;
-  --secondary: #efefef;
+  --secondary: #ebebee;
   --secondary-foreground: #1c1c1e;
-  --muted: #efefef;
-  --muted-foreground: #8e8e93;
-  --accent: #efefef;
+  --muted: #ebebee;
+  --muted-foreground: #6e6e73;
+  --accent: #ebebee;
   --accent-foreground: #1c1c1e;
   --destructive: #dc2626;
-  --border: #e5e5ea;
-  --input: #e5e5ea;
+  --border: #e6e6ea;
+  --input: #e3e3e8;
   --ring: #1c1c1e;
+  --brand: #1c1c1e;
+  --brand-foreground: #ffffff;
+  --lime: #d7f25b;
+  --lime-foreground: #1c1c1e;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1c1e;
+  --sidebar-primary: #1c1c1e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f1f3;
+  --sidebar-accent-foreground: #1c1c1e;
+  --sidebar-border: #ececef;
+  --sidebar-ring: #1c1c1e;
 }
 
 .dark {
@@ -123,6 +134,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
   html {
     @apply font-sans;

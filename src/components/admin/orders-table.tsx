@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Package } from "lucide-react";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { DueDatePicker, StatusSelect } from "@/components/admin/order-quick-edit";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DELIVERY_LABELS, type Order } from "@/lib/types";
@@ -7,14 +9,23 @@ export type OrderRow = Order & { client: { id: string; full_name: string; email:
 
 export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[]; showClient?: boolean }) {
   if (!orders.length) {
-    return <div className="rounded-xl border border-dashed p-12 text-center text-sm text-muted-foreground">Заказов не найдено</div>;
+    return (
+      <Empty className="border-2">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Package />
+          </EmptyMedia>
+          <EmptyTitle>Заказов не найдено</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
+    );
   }
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-card bg-card">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16 pl-4">№</TableHead>
+            <TableHead className="w-16 pl-5">№</TableHead>
             <TableHead>Заказ</TableHead>
             {showClient && <TableHead>Клиент</TableHead>}
             <TableHead>Статус</TableHead>
@@ -25,7 +36,7 @@ export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[];
         <TableBody>
           {orders.map((o) => (
             <TableRow key={o.id}>
-              <TableCell className="pl-4 font-mono text-muted-foreground">{o.number}</TableCell>
+              <TableCell className="pl-5 text-muted-foreground">{o.number}</TableCell>
               <TableCell>
                 <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">
                   {o.title}

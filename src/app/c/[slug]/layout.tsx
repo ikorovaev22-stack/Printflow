@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Pr
 }
 
 export const viewport: Viewport = {
-  themeColor: "#F7F7F7",
+  themeColor: "#f3f3f5",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

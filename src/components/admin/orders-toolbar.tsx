@@ -28,19 +28,20 @@ export function OrdersToolbar({ withStatus = true }: { withStatus?: boolean }) {
   }, [q]);
 
   return (
-    <div className="mb-4 flex flex-wrap gap-2">
+    <div className="mb-4 flex flex-wrap gap-3">
       <div className="relative min-w-60 flex-1">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по номеру, названию, клиенту" className="pl-9" />
+        <Search className="absolute top-1/2 left-4 size-4.5 -translate-y-1/2 text-muted-foreground" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по номеру, названию, клиенту" aria-label="Поиск" className="rounded-full border-transparent pl-11" />
       </div>
       {withStatus && (
         <Select value={params.get("status") ?? "all"} onValueChange={(v) => update("status", v === "all" ? "" : v)}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="h-11 w-48 border-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="active">В работе</SelectItem>
+            <SelectItem value="overdue">Просроченные</SelectItem>
             {STATUSES.map((s) => (
               <SelectItem key={s.value} value={s.value}>
                 {s.label}

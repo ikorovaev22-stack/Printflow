@@ -89,24 +89,29 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-4 py-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-5" aria-live="polite">
         {!messages.length && empty}
         {messages.map((m, i) => {
           const mine = m.from_client === (side === "client");
           const prev = messages[i - 1];
           const grouped = prev && prev.from_client === m.from_client;
           return (
-            <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start", !grouped && i > 0 && "mt-2")}>
+            <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start", !grouped && i > 0 && "mt-3")}>
               <div
                 className={cn(
-                  "max-w-[80%] rounded-3xl px-3.5 py-2 text-[15px] leading-snug",
-                  mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-card ring-1 ring-black/5 dark:ring-white/10",
+                  "max-w-[80%] rounded-[1.375rem] px-4 py-2.5 text-[15px] leading-snug",
+                  mine ? "rounded-br-md bg-primary text-primary-foreground" : cn("rounded-bl-md", side === "client" ? "bg-card" : "bg-muted"),
                 )}
               >
                 <p className="break-words whitespace-pre-wrap">{m.body}</p>
-                <p className={cn("mt-0.5 flex items-center justify-end gap-1 text-[11px]", mine ? "opacity-75" : "text-muted-foreground")}>
+                <p className={cn("mt-1 flex items-center justify-end gap-1 text-[11px] tabular-nums", mine ? "text-white/60" : "text-muted-foreground")}>
                   {formatChatTime(m.created_at)}
-                  {mine && (m.read_at ? <CheckCheck className="size-3.5" /> : <Check className="size-3.5" />)}
+                  {mine &&
+                    (m.read_at ? (
+                      <CheckCheck className="size-3.5" aria-label="Прочитано" />
+                    ) : (
+                      <Check className="size-3.5" aria-label="Отправлено" />
+                    ))}
                 </p>
               </div>
             </div>
@@ -119,24 +124,27 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
           e.preventDefault();
           send();
         }}
-        className="flex items-end gap-2 border-t bg-background/90 p-3 backdrop-blur"
+        className={cn("px-3 pb-3", side === "staff" && "border-t pt-3")}
       >
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          placeholder="Сообщение"
-          rows={1}
-          className="max-h-32 min-h-11 resize-none rounded-3xl px-4 py-2.5 text-[15px]"
-        />
-        <Button type="submit" size="icon" className="size-11 shrink-0 rounded-full" disabled={!text.trim() || sending} aria-label="Отправить">
-          <ArrowUp className="size-5" />
-        </Button>
+        <div className={cn("flex items-end gap-2 rounded-[1.625rem] p-1.5 pl-2", side === "client" ? "bg-card shadow-float" : "bg-muted")}>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            placeholder="Сообщение"
+            aria-label="Сообщение"
+            rows={1}
+            className="max-h-32 min-h-10 resize-none border-none bg-transparent px-2.5 py-2.5 text-[15px] shadow-none focus-visible:ring-0"
+          />
+          <Button type="submit" size="icon" className="size-11 shrink-0" disabled={!text.trim() || sending} aria-label="Отправить">
+            <ArrowUp />
+          </Button>
+        </div>
       </form>
     </div>
   );

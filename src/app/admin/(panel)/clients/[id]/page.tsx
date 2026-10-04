@@ -31,7 +31,7 @@ export default async function ClientPage({ params }: PageProps<"/admin/clients/[
           </Link>
         </Button>
       </PageHeader>
-      <div className="mb-6 flex flex-wrap gap-6 rounded-xl border bg-card p-5 text-sm">
+      <div className="mb-6 flex flex-wrap gap-6 rounded-card bg-card p-5 text-sm">
         <span className="flex items-center gap-2">
           <Phone className="size-4 text-muted-foreground" />
           {client.phone ? <a href={`tel:${client.phone}`}>{client.phone}</a> : "—"}

@@ -42,12 +42,12 @@ export function SettingsForm({ company }: { company: Company }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-      <form action={action} className="flex flex-col gap-6 rounded-xl border bg-card p-6">
+      <form action={action} className="flex flex-col gap-6 rounded-card bg-card p-6 md:p-8">
         <input type="hidden" name="logo_url" value={logo ?? ""} />
         <section className="flex flex-col gap-4">
           <h2 className="font-semibold">Бренд</h2>
           <div className="flex items-center gap-4">
-            <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-16 rounded-2xl text-2xl" />
+            <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-16 rounded-full text-2xl" />
             <div className="flex gap-2">
               <Button type="button" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
                 <ImageUp /> {uploading ? "Загрузка…" : "Загрузить логотип"}
@@ -101,32 +101,42 @@ export function SettingsForm({ company }: { company: Company }) {
       </form>
 
       <aside>
-        <p className="mb-2 text-sm font-medium text-muted-foreground">Предпросмотр приложения</p>
-        <div style={validColor ? brandStyle(color) : undefined} className="overflow-hidden rounded-[2rem] border-8 border-zinc-900 bg-muted/40 shadow-xl">
-          <div className="flex items-center justify-between px-4 pt-5 pb-3">
-            <span className="text-xl font-bold">Мои заказы</span>
-            <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-8 text-sm" />
+        <p className="mb-3 text-sm font-medium text-muted-foreground">Предпросмотр приложения</p>
+        <div
+          style={validColor ? brandStyle(color) : undefined}
+          className="overflow-hidden rounded-[2.5rem] border-[10px] border-primary bg-background pb-4"
+        >
+          <div className="flex items-center gap-2.5 px-4 pt-5">
+            <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-9 rounded-full text-sm" />
+            <span className="min-w-0 truncate text-sm font-semibold">{name || "Типография"}</span>
           </div>
-          <div className="mx-4 rounded-2xl bg-card p-3 shadow-sm">
-            <p className="text-[10px] text-muted-foreground">Заказ №12</p>
+          <p className="mt-4 px-4 text-xs text-muted-foreground">Добрый день, Анна</p>
+          <p className="px-4 text-xl font-bold tracking-tight">Ваши заказы</p>
+          <div className="mx-4 mt-3 rounded-[1.25rem] bg-primary p-4 text-primary-foreground">
+            <p className="text-[10px] text-white/60">Заказ №12</p>
             <p className="text-sm font-semibold">Визитки 500 шт.</p>
-            <div className="mt-2 flex gap-1">
+            <div className="mt-3 flex gap-1">
               {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className={`h-1 flex-1 rounded-full ${i < 3 ? "bg-primary" : "bg-muted"}`} />
+                <div key={i} className={`h-1 flex-1 rounded-full ${i < 3 ? "bg-white" : "bg-white/20"}`} />
               ))}
             </div>
           </div>
-          <div className="mx-4 mt-3 rounded-xl bg-primary py-2.5 text-center text-sm font-medium text-primary-foreground">Задать вопрос</div>
-          <div className="mt-5 grid grid-cols-4 border-t bg-background py-2 text-center text-[10px] text-muted-foreground">
-            <span className="flex flex-col items-center text-primary">
+          <div className="mx-4 mt-2 flex items-center gap-3 rounded-[1.25rem] bg-card p-3">
+            <span className="flex size-8 items-center justify-center rounded-full bg-brand text-brand-foreground">
               <Package className="size-4" />
-              Заказы
             </span>
-            <span>Чат</span>
-            <span>FAQ</span>
-            <span>Профиль</span>
+            <span className="text-xs font-medium">Этап «Печать» — сейчас</span>
+          </div>
+          <div className="mx-4 mt-4 flex items-center justify-between rounded-full bg-card p-1 shadow-float">
+            <span className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[10px] font-medium text-primary-foreground">
+              <Package className="size-3.5" /> Заказы
+            </span>
+            <span className="size-2 rounded-full bg-muted-foreground/30" />
+            <span className="size-2 rounded-full bg-muted-foreground/30" />
+            <span className="mr-3 size-2 rounded-full bg-muted-foreground/30" />
           </div>
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">Фирменный цвет — акцент: текущий этап, иконки и непрочитанные. Основные кнопки остаются тёмными.</p>
       </aside>
     </div>
   );

@@ -44,8 +44,10 @@ export function InstallBanner() {
   };
 
   return (
-    <div className="relative mb-4 flex items-center gap-3 rounded-3xl bg-primary/10 p-4 pr-10">
-      <SquarePlus className="size-8 shrink-0 text-primary" />
+    <div className="relative mb-5 flex items-center gap-3 rounded-card bg-card p-4 pr-12">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <SquarePlus className="size-5" />
+      </span>
       <div className="min-w-0 flex-1 text-sm">
         <p className="font-semibold">Установите приложение</p>
         {mode === "ios" ? (
@@ -67,7 +69,7 @@ export function InstallBanner() {
           Установить
         </Button>
       )}
-      <button onClick={dismiss} className="absolute top-2 right-2 p-1 text-muted-foreground" aria-label="Скрыть">
+      <button onClick={dismiss} className="absolute top-1 right-1 flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted" aria-label="Скрыть">
         <X className="size-4" />
       </button>
     </div>

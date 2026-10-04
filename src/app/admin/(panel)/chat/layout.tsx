@@ -31,7 +31,7 @@ export default async function ChatLayout({ children }: LayoutProps<"/admin/chat"
     <ChatShell
       list={
         <>
-          <h1 className="border-b px-4 py-4 text-xl font-semibold">Чат</h1>
+          <h1 className="border-b px-5 py-5 text-2xl font-bold tracking-tight">Чат</h1>
           <div className="min-h-0 flex-1 overflow-y-auto">
             <DialogList dialogs={[...dialogs.values()]} />
           </div>
