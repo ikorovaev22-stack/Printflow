@@ -10,7 +10,7 @@ export default async function Page({ params }: PageProps<"/c/[slug]/login">) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-6 py-10">
       <div className="flex flex-col items-center gap-3 text-center">
-        <CompanyLogo company={company} className="size-16 rounded-2xl text-2xl" />
+        <CompanyLogo company={company} className="size-16 rounded-3xl text-2xl" />
         <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
         <p className="text-sm text-muted-foreground">
           Войдите, чтобы видеть статус заказов

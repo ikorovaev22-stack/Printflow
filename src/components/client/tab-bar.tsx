@@ -15,8 +15,8 @@ export function TabBar({ slug, unread = 0 }: { slug: string; unread?: number }) 
     { href: `${base}/profile`, label: "Профиль", icon: User },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
-      <div className="mx-auto grid max-w-md grid-cols-4">
+    <nav className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+      <div className="mx-auto grid max-w-md grid-cols-4 rounded-full bg-card/95 px-2 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.06)] backdrop-blur-xl">
         {tabs.map((t) => {
           const active = t.active ?? pathname.startsWith(t.href);
           return (

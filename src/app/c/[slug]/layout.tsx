@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Pr
 }
 
 export const viewport: Viewport = {
-  themeColor: "#fafafa",
+  themeColor: "#F7F7F7",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -29,7 +29,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
   const company = await getCompanyBySlug(slug);
   if (!company) notFound();
   return (
-    <div style={brandStyle(company.brand_color)} className="min-h-dvh bg-muted/40 select-none [&_input,&_textarea,&_p]:select-text">
+    <div style={brandStyle(company.brand_color)} className="min-h-dvh bg-background select-none [&_input,&_textarea,&_p]:select-text">
       {children}
     </div>
   );

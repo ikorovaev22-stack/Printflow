@@ -53,7 +53,7 @@ function OrderList({ slug, orders, muted }: { slug: string; orders: Order[]; mut
         <li key={o.id}>
           <Link
             href={`/c/${slug}/orders/${o.id}`}
-            className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] dark:ring-white/10"
+            className="flex flex-col gap-4 rounded-3xl bg-card p-5 transition active:scale-[0.98]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">

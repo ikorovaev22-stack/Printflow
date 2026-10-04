@@ -24,7 +24,7 @@ export default async function ProfileScreen({ params }: PageProps<"/c/[slug]/pro
         </div>
       </div>
       <ProfileForm profile={profile} />
-      <div className="mt-4 overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+      <div className="mt-4 overflow-hidden rounded-3xl bg-card">
         <Link href={`/c/${slug}/about`} className="flex items-center gap-3 px-5 py-4 active:bg-muted">
           <Info className="size-5 text-primary" />
           <span className="flex-1">О компании «{company.name.replace(/^.*«|»$/g, "")}»</span>

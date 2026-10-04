@@ -99,7 +99,7 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
             <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start", !grouped && i > 0 && "mt-2")}>
               <div
                 className={cn(
-                  "max-w-[80%] rounded-2xl px-3.5 py-2 text-[15px] leading-snug shadow-sm",
+                  "max-w-[80%] rounded-3xl px-3.5 py-2 text-[15px] leading-snug",
                   mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-card ring-1 ring-black/5 dark:ring-white/10",
                 )}
               >

@@ -19,7 +19,7 @@ export default async function FaqScreen({ params }: PageProps<"/c/[slug]/faq">) 
   return (
     <Screen title="Вопросы">
       {faqs?.length ? (
-        <Accordion type="single" collapsible className="rounded-2xl bg-card px-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+        <Accordion type="single" collapsible className="rounded-3xl bg-card px-5">
           {faqs.map((f) => (
             <AccordionItem key={f.id} value={f.id}>
               <AccordionTrigger className="text-base">{f.question}</AccordionTrigger>
@@ -32,7 +32,7 @@ export default async function FaqScreen({ params }: PageProps<"/c/[slug]/faq">) 
       )}
       <Link
         href={`/c/${slug}/about`}
-        className="mt-4 flex items-center gap-3 rounded-2xl bg-card px-5 py-4 shadow-sm ring-1 ring-black/5 active:bg-muted dark:ring-white/10"
+        className="mt-4 flex items-center gap-3 rounded-3xl bg-card px-5 py-4 ring-1 ring-black/5 active:bg-muted dark:ring-white/10"
       >
         <Info className="size-5 text-primary" />
         <span className="flex-1">Адрес, телефон и часы работы</span>

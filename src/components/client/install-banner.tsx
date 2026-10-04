@@ -44,7 +44,7 @@ export function InstallBanner() {
   };
 
   return (
-    <div className="relative mb-4 flex items-center gap-3 rounded-2xl bg-primary/10 p-4 pr-10">
+    <div className="relative mb-4 flex items-center gap-3 rounded-3xl bg-primary/10 p-4 pr-10">
       <SquarePlus className="size-8 shrink-0 text-primary" />
       <div className="min-w-0 flex-1 text-sm">
         <p className="font-semibold">Установите приложение</p>

@@ -25,7 +25,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
       </div>
 
       {order.status === "ready" && (
-        <div className="mb-4 rounded-2xl bg-emerald-500 p-4 text-white shadow-sm">
+        <div className="mb-4 rounded-3xl bg-emerald-500 p-4 text-white">
           <p className="font-semibold">Заказ готов!</p>
           <p className="text-sm opacity-90">{pickup ? "Можно забирать в часы работы" : "Скоро передадим в доставку"}</p>
         </div>
@@ -36,11 +36,11 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
         <InfoTile icon={pickup ? Store : Truck} label="Получение" value={DELIVERY_LABELS[order.delivery_method]} />
       </section>
 
-      <section className="mb-4 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+      <section className="mb-4 rounded-3xl bg-card p-5">
         <OrderTimeline status={order.status} />
       </section>
 
-      <section className="mb-4 flex flex-col gap-4 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+      <section className="mb-4 flex flex-col gap-4 rounded-3xl bg-card p-5">
         <Row icon={MapPin} label={pickup ? "Адрес самовывоза" : "Адрес доставки"}>
           {pickup ? company.address || "—" : order.delivery_address || "—"}
         </Row>
@@ -48,7 +48,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
         {order.comment && <Row icon={MessageCircle} label="Комментарий типографии">{order.comment}</Row>}
       </section>
 
-      <Button asChild size="lg" className="h-12 w-full rounded-xl text-base">
+      <Button asChild size="lg" className="h-12 w-full rounded-full text-base">
         <Link href={`/c/${slug}/chat`}>
           <MessageCircle /> Задать вопрос
         </Link>
@@ -59,7 +59,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
 
 function InfoTile({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+    <div className="rounded-3xl bg-card p-4">
       <Icon className="mb-2 size-5 text-primary" />
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="font-semibold">{value}</p>

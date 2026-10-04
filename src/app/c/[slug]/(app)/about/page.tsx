@@ -24,7 +24,7 @@ export default async function AboutScreen({ params }: PageProps<"/c/[slug]/about
         <CompanyLogo company={company} className="size-20 rounded-3xl text-3xl" />
         <h2 className="text-xl font-semibold">{company.name}</h2>
       </div>
-      <div className="overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+      <div className="overflow-hidden rounded-3xl bg-card">
         {rows.map((r) => {
           const content = (
             <>
@@ -47,7 +47,7 @@ export default async function AboutScreen({ params }: PageProps<"/c/[slug]/about
         })}
       </div>
       {company.phone && (
-        <Button asChild size="lg" className="mt-6 h-12 w-full rounded-xl text-base">
+        <Button asChild size="lg" className="mt-6 h-12 w-full rounded-full text-base">
           <a href={`tel:${company.phone.replace(/[^\d+]/g, "")}`}>
             <Phone /> Позвонить
           </a>

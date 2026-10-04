@@ -16,7 +16,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   }, [state]);
 
   return (
-    <form action={action} className="flex flex-col gap-4 rounded-2xl bg-card p-5 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+    <form action={action} className="flex flex-col gap-4 rounded-3xl bg-card p-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor="full_name">Имя</Label>
         <Input id="full_name" name="full_name" defaultValue={profile.full_name} className="h-11" />

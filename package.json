@@ -43,5 +43,9 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "@astryxdesign/cli@0.6.3": true,
+    "@astryxdesign/core@0.6.3": true
   }
 }

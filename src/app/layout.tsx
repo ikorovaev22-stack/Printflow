@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import "@astryxdesign/core/reset.css";
+import "@astryxdesign/core/astryx.css";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-sans", subsets: ["latin", "cyrillic"] });
