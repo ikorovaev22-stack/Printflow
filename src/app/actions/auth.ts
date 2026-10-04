@@ -58,3 +58,14 @@ export async function signOut(fd: FormData) {
   await supabase.auth.signOut();
   redirect(slug ? `/c/${slug}/login` : "/admin/login");
 }
+
+export async function updateProfile(_: FormState, fd: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) return { error: "Сессия истекла" };
+  const { error } = await supabase
+    .from("profiles")
+    .update({ full_name: str(fd, "full_name"), phone: str(fd, "phone") || null })
+    .eq("id", data.user.id);
+  return error ? { error: "Не удалось сохранить" } : { message: "Сохранено" };
+}
