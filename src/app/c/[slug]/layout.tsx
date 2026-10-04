@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { getCompanyBySlug } from "@/lib/auth";
+import { TimeZoneProvider } from "@/components/time-zone";
 import { brandStyle } from "@/lib/brand";
 
 export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Promise<Metadata> {
@@ -30,7 +31,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
   if (!company) notFound();
   return (
     <div style={brandStyle(company.brand_color)} className="min-h-dvh bg-background select-none [&_input,&_textarea,&_p]:select-text">
-      {children}
+      <TimeZoneProvider value={company.timezone}>{children}</TimeZoneProvider>
     </div>
   );
 }

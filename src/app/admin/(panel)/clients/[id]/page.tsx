@@ -10,7 +10,7 @@ import type { Profile } from "@/lib/types";
 
 export default async function ClientPage({ params }: PageProps<"/admin/clients/[id]">) {
   const { id } = await params;
-  const { supabase } = await requireStaff();
+  const { supabase, company } = await requireStaff();
   const [{ data: client }, { data: orders }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).eq("role", "client").maybeSingle<Profile>(),
     supabase.from("orders").select("*").eq("client_id", id).order("created_at", { ascending: false }).returns<OrderRow[]>(),
@@ -19,7 +19,7 @@ export default async function ClientPage({ params }: PageProps<"/admin/clients/[
 
   return (
     <>
-      <PageHeader title={client.full_name || "Без имени"} description={`Клиент с ${formatDate(client.created_at)}`}>
+      <PageHeader title={client.full_name || "Без имени"} description={`Клиент с ${formatDate(client.created_at, company.timezone)}`}>
         <Button variant="outline" asChild>
           <Link href={`/admin/chat/${client.id}`}>
             <MessagesSquare /> Написать

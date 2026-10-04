@@ -1,7 +1,8 @@
 import { Check } from "lucide-react";
 import { STATUS_ICONS } from "@/components/status-badge";
+import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { STATUSES, type OrderStatus } from "@/lib/types";
+import { STATUSES, type OrderEvent, type OrderStatus } from "@/lib/types";
 
 const indexOf = (status: OrderStatus) => STATUSES.findIndex((s) => s.value === status);
 
@@ -26,8 +27,10 @@ export function OrderProgress({ status, tone = "brand" }: { status: OrderStatus;
   );
 }
 
-export function OrderTimeline({ status }: { status: OrderStatus }) {
+// events: status history; each reached step shows when the order last entered it
+export function OrderTimeline({ status, events = [], timeZone }: { status: OrderStatus; events?: OrderEvent[]; timeZone?: string }) {
   const idx = indexOf(status);
+  const enteredAt = new Map(events.map((e) => [e.status, e.created_at]));
   return (
     <ol className="flex flex-col">
       {STATUSES.map((s, i) => {
@@ -53,8 +56,13 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
               {done ? <Check className="size-4.5" strokeWidth={2.5} /> : <Icon className="size-4.5" />}
             </span>
             <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-              <p className={cn("font-medium", !done && !current && "text-muted-foreground")}>{s.label}</p>
-              {current && <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">Сейчас</span>}
+              <div className="min-w-0">
+                <p className={cn("font-medium", !done && !current && "text-muted-foreground")}>{s.label}</p>
+                {i <= idx && enteredAt.has(s.value) && (
+                  <p className="text-xs text-muted-foreground">{formatDateTime(enteredAt.get(s.value)!, timeZone)}</p>
+                )}
+              </div>
+              {current && <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium">Сейчас</span>}
             </div>
           </li>
         );

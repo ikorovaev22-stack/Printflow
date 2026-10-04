@@ -88,11 +88,11 @@ function FaqForm({ faq, onDone }: { faq?: Faq; onDone: () => void }) {
       {faq && <input type="hidden" name="id" value={faq.id} />}
       <div className="flex flex-col gap-2">
         <Label htmlFor="question">Вопрос</Label>
-        <Input id="question" name="question" defaultValue={faq?.question} required />
+        <Input id="question" name="question" defaultValue={faq?.question} maxLength={300} required />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="answer">Ответ</Label>
-        <Textarea id="answer" name="answer" defaultValue={faq?.answer} rows={5} required />
+        <Textarea id="answer" name="answer" defaultValue={faq?.answer} rows={5} maxLength={4000} required />
       </div>
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       <DialogFooter>

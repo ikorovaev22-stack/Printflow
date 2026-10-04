@@ -57,7 +57,7 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
           </Button>
         )
       }
-      eyebrow={`${greeting()}${firstName ? `, ${firstName}` : ""}`}
+      eyebrow={`${greeting(company.timezone)}${firstName ? `, ${firstName}` : ""}`}
       title="Ваши заказы"
     >
       <RealtimeRefresh table="orders" filter={`client_id=eq.${profile.id}`} />

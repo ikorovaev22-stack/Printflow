@@ -4,6 +4,7 @@ import { CalendarDays, CalendarPlus, MapPin, MessageCircle, Store, Truck } from 
 import { CompanyLogo } from "@/components/company-logo";
 import { Halftone } from "@/components/client/halftone";
 import { OrderProgress, OrderTimeline } from "@/components/client/order-timeline";
+import { OrderFiles } from "@/components/order-files";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { FloatingBar } from "@/components/client/tab-bar";
@@ -12,13 +13,18 @@ import { Button } from "@/components/ui/button";
 import { requireClient } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { DELIVERY_LABELS, type Order } from "@/lib/types";
+import { DELIVERY_LABELS, type Order, type OrderEvent, type OrderFile } from "@/lib/types";
 
 export default async function OrderScreen({ params }: PageProps<"/c/[slug]/orders/[id]">) {
   const { slug, id } = await params;
-  const { supabase, company } = await requireClient(slug);
-  const { data: order } = await supabase.from("orders").select("*").eq("id", id).maybeSingle<Order>();
+  const { supabase, company, profile } = await requireClient(slug);
+  const [{ data: order }, { data: events }, { data: files }] = await Promise.all([
+    supabase.from("orders").select("*").eq("id", id).maybeSingle<Order>(),
+    supabase.from("order_events").select("status, created_at").eq("order_id", id).order("created_at").returns<OrderEvent[]>(),
+    supabase.from("order_files").select("*").eq("order_id", id).order("created_at").returns<OrderFile[]>(),
+  ]);
   if (!order) notFound();
+  const tz = company.timezone;
   const pickup = order.delivery_method === "pickup";
   const ready = order.status === "ready";
   const delivered = order.status === "delivered";
@@ -27,6 +33,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
   return (
     <Screen back={`/c/${slug}`} className="pb-[calc(8rem+env(safe-area-inset-bottom))]">
       <RealtimeRefresh table="orders" filter={`id=eq.${order.id}`} />
+      <RealtimeRefresh table="order_files" filter={`order_id=eq.${order.id}`} />
 
       <section
         className={cn(
@@ -59,7 +66,12 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
 
       <SectionTitle>Этапы</SectionTitle>
       <div className="rounded-card bg-card p-5">
-        <OrderTimeline status={order.status} />
+        <OrderTimeline status={order.status} events={events ?? []} timeZone={tz} />
+      </div>
+
+      <SectionTitle>Файлы</SectionTitle>
+      <div className="rounded-card bg-card p-5">
+        <OrderFiles orderId={order.id} companyId={order.company_id} files={files ?? []} meId={profile.id} side="client" />
       </div>
 
       <SectionTitle>Детали</SectionTitle>
@@ -68,7 +80,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
           {address || "Уточним в чате"}
         </Detail>
         <Detail icon={CalendarPlus} label="Оформлен">
-          {formatDate(order.created_at)}
+          {formatDate(order.created_at, tz)}
         </Detail>
         {order.description && (
           <Detail icon={MessageCircle} label="Описание">

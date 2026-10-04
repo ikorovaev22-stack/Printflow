@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ChevronRight, LogOut, Store } from "lucide-react";
-import { signOut } from "@/app/actions/auth";
 import { ProfileForm } from "@/components/client/profile-form";
+import { PushToggle } from "@/components/push-toggle";
+import { SignOutForm } from "@/components/sign-out-form";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { requireClient } from "@/lib/auth";
 import { initials } from "@/lib/format";
@@ -27,6 +28,9 @@ export default async function ProfileScreen({ params }: PageProps<"/c/[slug]/pro
       <SectionTitle>Личные данные</SectionTitle>
       <ProfileForm profile={profile} />
 
+      <SectionTitle>Уведомления</SectionTitle>
+      <PushToggle />
+
       <SectionTitle>Ещё</SectionTitle>
       <div className="flex flex-col gap-2">
         <Link href={`/c/${slug}/about`} className="flex items-center gap-4 rounded-card bg-card p-4 transition-colors hover:bg-card/70">
@@ -36,8 +40,7 @@ export default async function ProfileScreen({ params }: PageProps<"/c/[slug]/pro
           <span className="min-w-0 flex-1 truncate font-medium">О типографии «{company.name.replace(/^.*«|»$/g, "")}»</span>
           <ChevronRight className="size-5 text-muted-foreground" />
         </Link>
-        <form action={signOut}>
-          <input type="hidden" name="slug" value={slug} />
+        <SignOutForm slug={slug}>
           <button
             type="submit"
             className="flex w-full items-center gap-4 rounded-card bg-card p-4 text-left font-medium text-destructive transition-colors hover:bg-card/70"
@@ -47,7 +50,7 @@ export default async function ProfileScreen({ params }: PageProps<"/c/[slug]/pro
             </span>
             Выйти
           </button>
-        </form>
+        </SignOutForm>
       </div>
     </Screen>
   );

@@ -15,16 +15,18 @@ export function AuthForm({ mode, slug }: { mode: "login" | "register"; slug?: st
       {slug && <input type="hidden" name="slug" value={slug} />}
       {mode === "register" && (
         <>
-          <Field name="full_name" label="Имя и фамилия" autoComplete="name" required />
-          <Field name="phone" label="Телефон" type="tel" inputMode="tel" autoComplete="tel" placeholder="+7" />
+          <Field name="full_name" label="Имя и фамилия" autoComplete="name" maxLength={120} required />
+          <Field name="phone" label="Телефон" type="tel" inputMode="tel" autoComplete="tel" placeholder="+7" maxLength={40} />
         </>
       )}
-      <Field name="email" label="Email" type="email" inputMode="email" autoComplete="email" required />
+      <Field name="email" label="Email" type="email" inputMode="email" autoComplete="email" maxLength={254} required />
       <Field
         name="password"
         label="Пароль"
         type="password"
         autoComplete={mode === "login" ? "current-password" : "new-password"}
+        minLength={mode === "register" ? 8 : undefined}
+        maxLength={72}
         required
       />
       {state?.error && (

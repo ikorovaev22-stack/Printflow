@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import type { FormState } from "@/app/actions/auth";
+import { isTimeZone } from "@/lib/format";
 import { logoSrc } from "@/lib/brand";
 
 const opt = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim() || null;
@@ -55,6 +56,8 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
   if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: "Цвет должен быть в формате #RRGGBB" };
   const name = opt(fd, "name");
   if (!name) return { error: "Укажите название" };
+  const timezone = opt(fd, "timezone") ?? company.timezone;
+  if (!isTimeZone(timezone)) return { error: "Неизвестный часовой пояс" };
   const logoUrl = opt(fd, "logo_url");
   if (logoUrl && !logoSrc({ id: company.id, logo_url: logoUrl })) return { error: "Недопустимый адрес логотипа" };
 
@@ -68,6 +71,7 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
       email: opt(fd, "email"),
       address: opt(fd, "address"),
       work_hours: opt(fd, "work_hours"),
+      timezone,
     })
     .eq("id", company.id);
   if (error) return { error: "Не удалось сохранить" };

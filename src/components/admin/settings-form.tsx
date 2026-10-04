@@ -8,9 +8,28 @@ import { CompanyLogo } from "@/components/company-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { brandStyle } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import type { Company } from "@/lib/types";
+
+const TIME_ZONES = [
+  ["Europe/Kaliningrad", "Калининград (UTC+2)"],
+  ["Europe/Moscow", "Москва (UTC+3)"],
+  ["Europe/Samara", "Самара (UTC+4)"],
+  ["Asia/Yekaterinburg", "Екатеринбург (UTC+5)"],
+  ["Asia/Omsk", "Омск (UTC+6)"],
+  ["Asia/Novosibirsk", "Новосибирск (UTC+7)"],
+  ["Asia/Krasnoyarsk", "Красноярск (UTC+7)"],
+  ["Asia/Irkutsk", "Иркутск (UTC+8)"],
+  ["Asia/Yakutsk", "Якутск (UTC+9)"],
+  ["Asia/Vladivostok", "Владивосток (UTC+10)"],
+  ["Asia/Magadan", "Магадан (UTC+11)"],
+  ["Asia/Kamchatka", "Камчатка (UTC+12)"],
+  ["Europe/Minsk", "Минск (UTC+3)"],
+  ["Asia/Almaty", "Алматы (UTC+5)"],
+  ["Asia/Tashkent", "Ташкент (UTC+5)"],
+];
 
 const PRESETS = ["#4f46e5", "#2563eb", "#0891b2", "#059669", "#65a30d", "#d97706", "#dc2626", "#db2777", "#7c3aed", "#18181b"];
 
@@ -60,13 +79,13 @@ export function SettingsForm({ company }: { company: Company }) {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                accept="image/png,image/jpeg,image/webp"
                 className="hidden"
                 onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
               />
             </div>
           </div>
-          <Field label="Название" name="name" value={name} onChange={(e) => setName(e.target.value)} required />
+          <Field label="Название" name="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required />
           <div className="flex flex-col gap-2">
             <Label>Фирменный цвет</Label>
             <div className="flex flex-wrap items-center gap-2">
@@ -88,10 +107,29 @@ export function SettingsForm({ company }: { company: Company }) {
         </section>
         <section className="grid gap-4 md:grid-cols-2">
           <h2 className="font-semibold md:col-span-2">Контакты</h2>
-          <Field label="Телефон" name="phone" defaultValue={company.phone ?? ""} />
-          <Field label="Email" name="email" type="email" defaultValue={company.email ?? ""} />
-          <Field label="Адрес" name="address" defaultValue={company.address ?? ""} className="md:col-span-2" />
-          <Field label="Часы работы" name="work_hours" defaultValue={company.work_hours ?? ""} placeholder="Пн–Пт 9:00–20:00" className="md:col-span-2" />
+          <Field label="Телефон" name="phone" type="tel" defaultValue={company.phone ?? ""} maxLength={40} />
+          <Field label="Email" name="email" type="email" defaultValue={company.email ?? ""} maxLength={254} />
+          <Field label="Адрес" name="address" defaultValue={company.address ?? ""} maxLength={300} className="md:col-span-2" />
+          <Field label="Часы работы" name="work_hours" defaultValue={company.work_hours ?? ""} placeholder="Пн–Пт 9:00–20:00" maxLength={200} />
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="timezone">Часовой пояс</Label>
+            <Select name="timezone" defaultValue={company.timezone}>
+              <SelectTrigger id="timezone" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {(TIME_ZONES.some(([tz]) => tz === company.timezone) ? TIME_ZONES : [[company.timezone, company.timezone], ...TIME_ZONES]).map(
+                    ([tz, label]) => (
+                      <SelectItem key={tz} value={tz}>
+                        {label}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
         </section>
         <div>
           <Button type="submit" disabled={pending || uploading}>

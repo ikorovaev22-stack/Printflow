@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CircleHelp, LogOut, MessagesSquare, Package, Settings, Users } from "lucide-react";
-import { signOut } from "@/app/actions/auth";
 import { CompanyLogo } from "@/components/company-logo";
+import { PushButton } from "@/components/push-toggle";
+import { SignOutForm } from "@/components/sign-out-form";
 import {
   Sidebar,
   SidebarContent,
@@ -80,11 +81,12 @@ export function AppSidebar({ company, profile, unread }: { company: Company; pro
             <p className="truncate text-sm font-medium">{profile.full_name}</p>
             <p className="text-xs text-muted-foreground">{profile.role === "owner" ? "Владелец" : "Сотрудник"}</p>
           </div>
-          <form action={signOut}>
+          <PushButton />
+          <SignOutForm>
             <SidebarMenuButton type="submit" className="size-9 justify-center rounded-full p-0 hover:bg-card" aria-label="Выйти" title="Выйти">
               <LogOut />
             </SidebarMenuButton>
-          </form>
+          </SignOutForm>
         </div>
       </SidebarFooter>
     </Sidebar>

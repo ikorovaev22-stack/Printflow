@@ -7,7 +7,7 @@ import type { Message, Profile } from "@/lib/types";
 
 export default async function DialogPage({ params }: PageProps<"/admin/chat/[clientId]">) {
   const { clientId } = await params;
-  const { supabase, profile, company } = await requireStaff();
+  const { supabase } = await requireStaff();
   const [{ data: client }, { data: messages }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", clientId).eq("role", "client").maybeSingle<Profile>(),
     supabase.from("messages").select("*").eq("client_id", clientId).order("created_at").returns<Message[]>(),
@@ -29,9 +29,7 @@ export default async function DialogPage({ params }: PageProps<"/admin/chat/[cli
       </header>
       <Chat
         key={client.id}
-        companyId={company.id}
         clientId={client.id}
-        meId={profile.id}
         side="staff"
         initialMessages={messages ?? []}
         empty={<p className="m-auto text-sm text-muted-foreground">Сообщений пока нет — напишите первым</p>}

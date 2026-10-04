@@ -13,13 +13,13 @@ export const metadata = { title: "Заказы" };
 
 export default async function OrdersPage({ searchParams }: PageProps<"/admin/orders">) {
   const { q, status } = (await searchParams) as { q?: string; status?: string };
-  const { supabase } = await requireStaff();
+  const { supabase, company } = await requireStaff();
 
   let query = supabase
     .from("orders")
     .select("*, client:profiles(id, full_name, email)")
     .order("created_at", { ascending: false });
-  const today = todayISO();
+  const today = todayISO(company.timezone);
   if (status === "active") query = query.not("status", "in", "(ready,delivered)");
   else if (status === "overdue") query = query.not("status", "in", "(ready,delivered)").lt("due_date", today);
   else if (status) query = query.eq("status", status);

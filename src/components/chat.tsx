@@ -3,24 +3,26 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, CheckCheck, Check } from "lucide-react";
+import { toast } from "sonner";
+import { sendMessage } from "@/app/actions/messages";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
+import { useTimeZone } from "@/components/time-zone";
 import { formatChatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/types";
 
 type Props = {
-  companyId: string;
   clientId: string;
-  meId: string;
   side: "client" | "staff";
   initialMessages: Message[];
   empty?: React.ReactNode;
 };
 
-export function Chat({ companyId, clientId, meId, side, initialMessages, empty }: Props) {
+export function Chat({ clientId, side, initialMessages, empty }: Props) {
   const router = useRouter();
+  const timeZone = useTimeZone();
   const [supabase] = useState(createClient);
   const [messages, setMessages] = useState(initialMessages);
   const [text, setText] = useState("");
@@ -76,15 +78,11 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
     const body = text.trim();
     if (!body || sending) return;
     setSending(true);
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({ company_id: companyId, client_id: clientId, sender_id: meId, body })
-      .select()
-      .single<Message>();
+    const res = await sendMessage(clientId, body);
     setSending(false);
-    if (error) return;
+    if (res.error) return toast.error(res.error);
     setText("");
-    upsert(data);
+    if (res.message) upsert(res.message);
   }
 
   return (
@@ -105,7 +103,7 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
               >
                 <p className="break-words whitespace-pre-wrap">{m.body}</p>
                 <p className={cn("mt-1 flex items-center justify-end gap-1 text-[11px] tabular-nums", mine ? "text-white/60" : "text-muted-foreground")}>
-                  {formatChatTime(m.created_at)}
+                  {formatChatTime(m.created_at, timeZone)}
                   {mine &&
                     (m.read_at ? (
                       <CheckCheck className="size-3.5" aria-label="Прочитано" />
@@ -138,6 +136,7 @@ export function Chat({ companyId, clientId, meId, side, initialMessages, empty }
             }}
             placeholder="Сообщение"
             aria-label="Сообщение"
+            maxLength={4000}
             rows={1}
             className="max-h-32 min-h-10 resize-none border-none bg-transparent px-2.5 py-2.5 text-[15px] shadow-none focus-visible:ring-0"
           />

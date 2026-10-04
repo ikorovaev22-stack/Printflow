@@ -79,7 +79,20 @@ async function main() {
     { client_id: olga, title: "Календари настенные, 50 шт.", status: "ready", due_date: day(-1), delivery_method: "delivery", delivery_address: "Москва, Ленинский пр-т, 45" },
     { client_id: olga, title: "Бланки А4, 1000 шт.", status: "delivered", due_date: day(-20), delivery_method: "pickup" },
   ];
-  for (const o of orders) must(await admin.from("orders").insert({ ...o, company_id: company.id }));
+  const STEPS = ["accepted", "design", "printing", "finishing", "ready", "delivered"];
+  for (const o of orders) {
+    const order = must(await admin.from("orders").insert({ ...o, company_id: company.id }).select("id").single())!;
+    // Replace the single trigger-written event with a plausible history, one step per working day
+    must(await admin.from("order_events").delete().eq("order_id", order.id));
+    const last = STEPS.indexOf(o.status);
+    const history = STEPS.slice(0, last + 1).map((status, i) => ({
+      order_id: order.id,
+      company_id: company.id,
+      status,
+      created_at: new Date(Date.now() - (last - i) * 86400000 - (i === last ? 2 : 9) * 3600000).toISOString(),
+    }));
+    must(await admin.from("order_events").insert(history));
+  }
 
   const faqs = [
     ["Сколько времени занимает печать?", "Визитки и листовки — 1–2 рабочих дня. Каталоги, книги и широкоформатная печать — 3–5 дней. Точный срок указан в карточке заказа."],

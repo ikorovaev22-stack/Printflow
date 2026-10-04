@@ -12,6 +12,7 @@ export type Company = {
   email: string | null;
   address: string | null;
   work_hours: string | null;
+  timezone: string;
 };
 
 export type Profile = {
@@ -48,6 +49,20 @@ export type Message = {
   body: string;
   read_at: string | null;
   from_client: boolean;
+  created_at: string;
+};
+
+export type OrderEvent = { status: OrderStatus; created_at: string };
+
+export type OrderFile = {
+  id: string;
+  order_id: string;
+  uploaded_by: string;
+  from_client: boolean;
+  name: string;
+  path: string;
+  size: number;
+  mime: string | null;
   created_at: string;
 };
 

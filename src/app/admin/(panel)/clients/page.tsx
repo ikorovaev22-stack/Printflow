@@ -12,7 +12,7 @@ type ClientRow = Profile & { orders: { status: OrderStatus }[] };
 
 export default async function ClientsPage({ searchParams }: PageProps<"/admin/clients">) {
   const { q } = (await searchParams) as { q?: string };
-  const { supabase } = await requireStaff();
+  const { supabase, company } = await requireStaff();
   const { data } = await supabase
     .from("profiles")
     .select("*, orders(status)")
@@ -55,7 +55,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
                   {c.orders.filter((o) => o.status !== "ready" && o.status !== "delivered").length}
                 </TableCell>
                 <TableCell className="text-right">{c.orders.length}</TableCell>
-                <TableCell className="pr-4 text-right text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                <TableCell className="pr-4 text-right text-muted-foreground">{formatDate(c.created_at, company.timezone)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

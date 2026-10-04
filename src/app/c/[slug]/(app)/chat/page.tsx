@@ -39,9 +39,7 @@ export default async function ChatScreen({ params }: PageProps<"/c/[slug]/chat">
         )}
       </header>
       <Chat
-        companyId={company.id}
         clientId={profile.id}
-        meId={profile.id}
         side="client"
         initialMessages={data ?? []}
         empty={

@@ -9,6 +9,15 @@ export const getCompanyBySlug = cache(async (slug: string) => {
   return data;
 });
 
+// Single print shop install: DEFAULT_COMPANY_SLUG, or the first company created
+export const getDefaultCompany = cache(async () => {
+  const supabase = await createClient();
+  const slug = process.env.DEFAULT_COMPANY_SLUG;
+  const query = supabase.from("companies").select("*");
+  const { data } = await (slug ? query.eq("slug", slug) : query.order("created_at").limit(1)).maybeSingle<Company>();
+  return data;
+});
+
 export const getSession = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();

@@ -34,10 +34,10 @@ export function OrderForm({ order, clients, clientId, back }: Props) {
         </Select>
       </Field>
       <Field label="Название" className="md:col-span-2">
-        <Input name="title" defaultValue={order?.title} placeholder="Визитки 500 шт." required />
+        <Input name="title" defaultValue={order?.title} placeholder="Визитки 500 шт." maxLength={200} required />
       </Field>
       <Field label="Описание" className="md:col-span-2">
-        <Textarea name="description" defaultValue={order?.description ?? ""} placeholder="Формат, бумага, тираж" rows={3} />
+        <Textarea name="description" defaultValue={order?.description ?? ""} placeholder="Формат, бумага, тираж" rows={3} maxLength={4000} />
       </Field>
       <Field label="Статус">
         <Select name="status" defaultValue={order?.status ?? "accepted"}>
@@ -68,10 +68,10 @@ export function OrderForm({ order, clients, clientId, back }: Props) {
         </Select>
       </Field>
       <Field label="Адрес доставки">
-        <Input name="delivery_address" defaultValue={order?.delivery_address ?? ""} disabled={delivery !== "delivery"} />
+        <Input name="delivery_address" defaultValue={order?.delivery_address ?? ""} disabled={delivery !== "delivery"} maxLength={300} />
       </Field>
       <Field label="Комментарий для клиента" className="md:col-span-2">
-        <Textarea name="comment" defaultValue={order?.comment ?? ""} rows={2} />
+        <Textarea name="comment" defaultValue={order?.comment ?? ""} rows={2} maxLength={2000} />
       </Field>
       <div className="flex items-center gap-3 md:col-span-2">
         <Button type="submit" disabled={pending}>

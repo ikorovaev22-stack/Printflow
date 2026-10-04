@@ -41,6 +41,8 @@
   --color-card: var(--card);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-hero: var(--hero);
+  --color-hero-foreground: var(--hero-foreground);
   --color-lime: var(--lime);
   --color-lime-foreground: var(--lime-foreground);
   --radius-tile: 1rem;
@@ -76,6 +78,8 @@
   --ring: #1c1c1e;
   --brand: #1c1c1e;
   --brand-foreground: #ffffff;
+  --hero: #1c1c1e;
+  --hero-foreground: #ffffff;
   --lime: #d7f25b;
   --lime-foreground: #1c1c1e;
   --chart-1: oklch(0.87 0 0);

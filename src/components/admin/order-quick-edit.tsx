@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { useTimeZone } from "@/components/time-zone";
 import { formatDateShort, toISODate, todayISO } from "@/lib/format";
 import { STATUSES, type OrderStatus } from "@/lib/types";
 
@@ -48,7 +49,8 @@ export function StatusSelect({ id, status }: { id: string; status: OrderStatus }
 export function DueDatePicker({ id, due, status }: { id: string; due: string | null; status: OrderStatus }) {
   const [open, setOpen] = useState(false);
   const [pending, run] = useUpdate(id);
-  const overdue = due && due < todayISO() && status !== "ready" && status !== "delivered";
+  const timeZone = useTimeZone();
+  const overdue = due && due < todayISO(timeZone) && status !== "ready" && status !== "delivered";
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

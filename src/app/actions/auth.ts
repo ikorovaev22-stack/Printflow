@@ -1,16 +1,22 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { error?: string; message?: string } | undefined;
 
 const str = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 
+const TOO_MANY = { error: "Слишком много попыток. Подождите несколько минут и попробуйте снова" };
+
 export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const slug = str(fd, "slug");
+  const email = str(fd, "email").toLowerCase();
+  const ip = await clientIp();
+  if (!rateLimit(`login:${ip}`, 10, 5 * 60_000) || !rateLimit(`login:${email}`, 20, 15 * 60_000)) return TOO_MANY;
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email: str(fd, "email"), password: str(fd, "password") });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: String(fd.get("password") ?? "") });
   if (error) return { error: "Неверный email или пароль" };
 
   const { data: profile } = await supabase
@@ -36,14 +42,19 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
 
 export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   const slug = str(fd, "slug");
-  const password = str(fd, "password");
-  if (password.length < 6) return { error: "Пароль должен быть не короче 6 символов" };
+  const password = String(fd.get("password") ?? "");
+  const fullName = str(fd, "full_name");
+  const phone = str(fd, "phone");
+  if (password.length < 8) return { error: "Пароль должен быть не короче 8 символов" };
+  if (password.length > 72) return { error: "Пароль слишком длинный" };
+  if (!fullName || fullName.length > 120 || phone.length > 40) return { error: "Проверьте имя и телефон" };
+  if (!rateLimit(`signup:${await clientIp()}`, 5, 60 * 60_000)) return TOO_MANY;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: str(fd, "email"),
     password,
-    options: { data: { company_slug: slug, full_name: str(fd, "full_name"), phone: str(fd, "phone") } },
+    options: { data: { company_slug: slug, full_name: fullName, phone } },
   });
   if (error) {
     return { error: error.code === "user_already_exists" ? "Этот email уже зарегистрирован" : "Не удалось зарегистрироваться" };
@@ -63,9 +74,12 @@ export async function updateProfile(_: FormState, fd: FormData): Promise<FormSta
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims.sub) return { error: "Сессия истекла" };
+  const fullName = str(fd, "full_name");
+  const phone = str(fd, "phone");
+  if (fullName.length > 120 || phone.length > 40) return { error: "Слишком длинное имя или телефон" };
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: str(fd, "full_name"), phone: str(fd, "phone") || null })
+    .update({ full_name: fullName, phone: phone || null })
     .eq("id", data.claims.sub);
   return error ? { error: "Не удалось сохранить" } : { message: "Сохранено" };
 }

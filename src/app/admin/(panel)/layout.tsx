@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/admin/app-sidebar";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { TimeZoneProvider } from "@/components/time-zone";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireStaff } from "@/lib/auth";
 import { brandStyle } from "@/lib/brand";
@@ -21,7 +22,9 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
           <header className="flex h-14 items-center gap-2 bg-card px-4 md:hidden">
             <SidebarTrigger />
           </header>
-          <div className="mx-auto w-full max-w-6xl p-4 md:p-10">{children}</div>
+          <div className="mx-auto w-full max-w-6xl p-4 md:p-10">
+            <TimeZoneProvider value={company.timezone}>{children}</TimeZoneProvider>
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
