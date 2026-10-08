@@ -5,6 +5,7 @@
 import { parseArgs } from "node:util";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_PRICE_LIST } from "../src/lib/pricing";
 
 config({ path: ".env.local", quiet: true });
 
@@ -68,11 +69,15 @@ async function main() {
   }
   const { error: roleError } = await admin.from("profiles").update({ role: "owner" }).eq("id", user.user.id);
   if (roleError) fail(roleError.message);
+  // Market prices so the calculator works right away; the owner adjusts them in the panel (/admin/prices)
+  const { error: pricesError } = await admin.from("price_lists").insert({ company_id: company.id, config: DEFAULT_PRICE_LIST });
+  if (pricesError) fail(pricesError.message);
 
   const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   console.log(`✔ Создано: ${a.name}`);
   console.log(`  Приложение клиентов: ${site}/c/${a.slug}`);
   console.log(`  Панель сотрудников:  ${site}/admin  (вход: ${a.email})`);
+  console.log(`  Калькулятор:         ${site}/c/${a.slug}/calculator  (цены — в панели, раздел «Цены»)`);
 }
 
 main().catch((e) => fail(e instanceof Error ? e.message : String(e)));

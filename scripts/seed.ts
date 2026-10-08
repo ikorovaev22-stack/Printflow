@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_PRICE_LIST, quote, type CardsInput } from "../src/lib/pricing";
 
 config({ path: ".env.local" });
 
@@ -94,6 +95,24 @@ async function main() {
     must(await admin.from("order_events").insert(history));
   }
 
+  // Calculator: market prices and one request, as a client sends it from the calculator
+  must(await admin.from("price_lists").insert({ company_id: company.id, config: DEFAULT_PRICE_LIST }));
+  const request: CardsInput = {
+    product: "cards", size: "90x50", qty: 500, paper: "designer", sides: "4+4", lamination: "none", corners: true, urgent: false,
+  };
+  const q = quote(request, DEFAULT_PRICE_LIST);
+  must(
+    await admin.from("orders").insert({
+      company_id: company.id,
+      client_id: olga,
+      title: q.title,
+      description: "Нужны к пятнице",
+      source: "calculator",
+      calc: { input: request, lines: q.lines, total: q.total, price_list_updated_at: new Date().toISOString() },
+      price: q.total,
+    }),
+  );
+
   const faqs = [
     ["Сколько времени занимает печать?", "Визитки и листовки — 1–2 рабочих дня. Каталоги, книги и широкоформатная печать — 3–5 дней. Точный срок указан в карточке заказа."],
     ["Как узнать, что заказ готов?", "Статус заказа обновляется в приложении. Когда он сменится на «Готов», заказ можно забирать."],
@@ -112,7 +131,7 @@ async function main() {
   ];
   for (const m of messages) must(await admin.from("messages").insert({ ...m, company_id: company.id }));
 
-  console.log(`Seeded company "${company.name}" (/c/${SLUG}), ${users.length} users, ${orders.length} orders`);
+  console.log(`Seeded company "${company.name}" (/c/${SLUG}), ${users.length} users, ${orders.length + 1} orders`);
 }
 
 main().catch((e) => {

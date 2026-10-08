@@ -10,8 +10,10 @@
     "typecheck": "tsc --noEmit",
     "db:push": "sh -c 'set -a; . ./.env.local; supabase db push --db-url \"$DATABASE_URL\"'",
     "seed": "tsx scripts/seed.ts",
+    "test:unit": "node --import tsx --test tests/pricing.test.ts",
     "test:rls": "node --import tsx --test tests/rls.test.ts",
     "create-company": "tsx scripts/create-company.ts",
+    "create-staff": "tsx scripts/create-staff.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

@@ -62,3 +62,7 @@ export function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} КБ`;
   return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
 }
+
+// Whole rubles, "1 200 ₽" (non-breaking spaces keep the amount on one line)
+const rubles = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+export const formatRub = (n: number) => `${rubles.format(n)} ₽`;

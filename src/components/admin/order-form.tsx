@@ -70,6 +70,9 @@ export function OrderForm({ order, clients, clientId, back }: Props) {
       <Field label="Адрес доставки">
         <Input name="delivery_address" defaultValue={order?.delivery_address ?? ""} disabled={delivery !== "delivery"} maxLength={300} />
       </Field>
+      <Field label="Стоимость, ₽">
+        <Input name="price" type="number" inputMode="numeric" min={0} max={100000000} step={1} defaultValue={order?.price ?? ""} placeholder="Не указана" />
+      </Field>
       <Field label="Комментарий для клиента" className="md:col-span-2">
         <Textarea name="comment" defaultValue={order?.comment ?? ""} rows={2} maxLength={2000} />
       </Field>

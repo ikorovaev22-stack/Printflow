@@ -4,6 +4,7 @@ import { OrderForm } from "@/components/admin/order-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { OrderTimeline } from "@/components/client/order-timeline";
 import { OrderFiles } from "@/components/order-files";
+import { QuoteLines } from "@/components/quote-lines";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { requireStaff } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
@@ -28,6 +29,15 @@ export default async function EditOrderPage({ params }: PageProps<"/admin/orders
       <div className="grid items-start gap-6 xl:grid-cols-[1fr_360px]">
         <OrderForm order={order} clients={clients ?? []} back="/admin/orders" />
         <aside className="flex flex-col gap-6">
+          {order.calc && (
+            <section className="rounded-card bg-card p-6">
+              <h2 className="font-semibold">Расчёт клиента</h2>
+              <p className="mt-1 mb-4 text-sm text-muted-foreground">
+                Заявка из калькулятора, цены от {formatDate(order.calc.price_list_updated_at, company.timezone)}
+              </p>
+              <QuoteLines lines={order.calc.lines} total={order.calc.total} />
+            </section>
+          )}
           <section className="rounded-card bg-card p-6">
             <h2 className="mb-4 font-semibold">Файлы</h2>
             <OrderFiles orderId={order.id} companyId={order.company_id} files={files ?? []} meId={profile.id} side="staff" />

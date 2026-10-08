@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SITE_URL } from "@/lib/config";
 import { clientIp, limitIp, rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { safeNext } from "@/lib/utils";
 
 export type FormState = { error?: string; message?: string } | undefined;
 
@@ -38,7 +39,7 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
     await supabase.auth.signOut();
     return { error: "Аккаунт не найден в этой компании" };
   }
-  redirect(isStaff ? "/admin/orders" : `/c/${slug}`);
+  redirect(isStaff ? "/admin/orders" : (safeNext(slug, fd.get("next")) ?? `/c/${slug}`));
 }
 
 export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
@@ -49,6 +50,7 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   if (password.length < 8) return { error: "Пароль должен быть не короче 8 символов" };
   if (password.length > 72) return { error: "Пароль слишком длинный" };
   if (!fullName || fullName.length > 120 || phone.length > 40) return { error: "Проверьте имя и телефон" };
+  if (fd.get("pd_consent") !== "on") return { error: "Нужно согласие на обработку персональных данных" };
   if (!limitIp(await clientIp(), "signup", 5, 60 * 60_000)) return TOO_MANY;
 
   const supabase = await createClient();
@@ -56,7 +58,8 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
     email: str(fd, "email"),
     password,
     options: {
-      data: { company_slug: slug, full_name: fullName, phone },
+      // pd_consent: the database stamps profiles.pd_consent_at (152-ФЗ)
+      data: { company_slug: slug, full_name: fullName, phone, pd_consent: true },
       emailRedirectTo: SITE_URL ? `${SITE_URL}/c/${slug}` : undefined,
     },
   });
@@ -64,7 +67,7 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
     return { error: error.code === "user_already_exists" ? "Этот email уже зарегистрирован" : "Не удалось зарегистрироваться" };
   }
   if (!data.session) return { message: "Проверьте почту и подтвердите email, затем войдите" };
-  redirect(`/c/${slug}`);
+  redirect(safeNext(slug, fd.get("next")) ?? `/c/${slug}`);
 }
 
 export async function signOut(fd: FormData) {

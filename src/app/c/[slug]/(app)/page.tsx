@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, ChevronRight, Package, PackageCheck, Phone, Store, Truck } from "lucide-react";
 import { CompanyLogo } from "@/components/company-logo";
+import { CalculatorCard } from "@/components/client/calculator-entry";
 import { InstallBanner } from "@/components/client/install-banner";
 import { Halftone } from "@/components/client/halftone";
 import { OrderProgress } from "@/components/client/order-timeline";
@@ -8,8 +9,10 @@ import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { STATUS_ICONS, StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { requireClient } from "@/lib/auth";
+import { getPriceList } from "@/lib/price-list";
+import { isEnabled } from "@/lib/pricing";
 import { formatDateShort, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { DELIVERY_LABELS, type Order } from "@/lib/types";
@@ -20,12 +23,11 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
   const { slug } = await params;
   const { view } = (await searchParams) as { view?: string };
   const { supabase, profile, company } = await requireClient(slug);
-  const { data } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("client_id", profile.id)
-    .order("created_at", { ascending: false })
-    .returns<Order[]>();
+  const [{ data }, prices] = await Promise.all([
+    supabase.from("orders").select("*").eq("client_id", profile.id).order("created_at", { ascending: false }).returns<Order[]>(),
+    getPriceList(company.id),
+  ]);
+  const calculator = !!prices && isEnabled(prices.prices);
   const orders = data ?? [];
   const current = orders.filter((o) => o.status !== "delivered");
   const done = orders.filter((o) => o.status === "delivered");
@@ -62,6 +64,7 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
     >
       <RealtimeRefresh table="orders" filter={`client_id=eq.${profile.id}`} />
       <InstallBanner />
+      {calculator && !!data?.length && <CalculatorCard slug={slug} />}
 
       <nav aria-label="Фильтр заказов" className="mb-5 flex gap-2">
         <FilterChip href={`/c/${slug}`} active={!archive} label="Текущие" count={current.length} />
@@ -75,8 +78,19 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
               <Package />
             </EmptyMedia>
             <EmptyTitle>Заказов пока нет</EmptyTitle>
-            <EmptyDescription>Когда типография оформит заказ, он появится здесь со статусом и сроком.</EmptyDescription>
+            <EmptyDescription>
+              {calculator
+                ? "Рассчитайте стоимость и оформите заказ — он появится здесь со статусом и сроком."
+                : "Когда типография оформит заказ, он появится здесь со статусом и сроком."}
+            </EmptyDescription>
           </EmptyHeader>
+          {calculator && (
+            <EmptyContent>
+              <Button asChild size="lg">
+                <Link href={`/c/${slug}/calculator`}>Рассчитать и заказать</Link>
+              </Button>
+            </EmptyContent>
+          )}
         </Empty>
       ) : archive ? (
         <OrderList slug={slug} orders={done} empty="Выданных заказов пока нет" />

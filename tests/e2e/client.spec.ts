@@ -26,6 +26,28 @@ test("forgot password answers the same for any address", async ({ page }) => {
   await expect(page.getByText("Если такой email зарегистрирован")).toBeVisible();
 });
 
+test("sign-up needs consent to personal data processing", async ({ page }) => {
+  await page.goto("/c/demo/register");
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("Имя и фамилия").fill("Новый Клиент");
+  await page.getByLabel("Email").fill(`new-${Date.now()}@example.com`);
+  await page.getByLabel("Пароль", { exact: true }).fill("New-client-1");
+  const consent = page.getByRole("checkbox", { name: /обработку персональных данных/ });
+  await page.getByRole("button", { name: "Создать аккаунт" }).click();
+  // The browser blocks the form until the box is ticked
+  await expect(page).toHaveURL(/\/register$/);
+  expect(await consent.evaluate((el: HTMLInputElement) => el.validity.valueMissing)).toBe(true);
+
+  const policy = page.waitForEvent("popup");
+  await page.getByRole("link", { name: "политикой конфиденциальности" }).click();
+  await expect((await policy).getByRole("heading", { name: "Политика конфиденциальности" })).toBeVisible();
+
+  await consent.check();
+  await page.getByRole("button", { name: "Создать аккаунт" }).click();
+  await expect(page).toHaveURL(/\/c\/demo$/);
+  await expect(page.getByRole("heading", { name: "Ваши заказы" })).toBeVisible();
+});
+
 test.describe("signed-in client", () => {
   test.use({ storageState: CLIENT_STATE });
   test.beforeEach(({ page }) => page.goto("/c/demo"));

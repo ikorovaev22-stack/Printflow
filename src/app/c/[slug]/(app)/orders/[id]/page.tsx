@@ -5,13 +5,14 @@ import { CompanyLogo } from "@/components/company-logo";
 import { Halftone } from "@/components/client/halftone";
 import { OrderProgress, OrderTimeline } from "@/components/client/order-timeline";
 import { OrderFiles } from "@/components/order-files";
+import { QuoteLines } from "@/components/quote-lines";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { FloatingBar } from "@/components/client/tab-bar";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { requireClient } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatRub } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { DELIVERY_LABELS, type Order, type OrderEvent, type OrderFile } from "@/lib/types";
 
@@ -64,6 +65,25 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
         <Fact icon={pickup ? Store : Truck} label="Получение" value={DELIVERY_LABELS[order.delivery_method]} />
       </section>
 
+      {order.price !== null && (
+        <>
+          <SectionTitle>Стоимость</SectionTitle>
+          <div className="rounded-card bg-card p-5">
+            {order.calc && order.calc.total === order.price ? (
+              <QuoteLines lines={order.calc.lines} total={order.price} />
+            ) : (
+              <p className="text-2xl font-semibold tabular-nums">{formatRub(order.price)}</p>
+            )}
+            {order.calc && order.calc.total !== order.price && (
+              <p className="mt-2 text-sm text-muted-foreground">Менеджер уточнил цену. По калькулятору было {formatRub(order.calc.total)}</p>
+            )}
+            {order.calc && order.calc.total === order.price && (
+              <p className="mt-4 text-sm text-muted-foreground">Цена предварительная: менеджер подтвердит её после проверки макета</p>
+            )}
+          </div>
+        </>
+      )}
+
       <SectionTitle>Этапы</SectionTitle>
       <div className="rounded-card bg-card p-5">
         <OrderTimeline status={order.status} events={events ?? []} timeZone={tz} />
@@ -83,7 +103,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
           {formatDate(order.created_at, tz)}
         </Detail>
         {order.description && (
-          <Detail icon={MessageCircle} label="Описание">
+          <Detail icon={MessageCircle} label={order.source === "calculator" ? "Ваш комментарий" : "Описание"}>
             {order.description}
           </Detail>
         )}

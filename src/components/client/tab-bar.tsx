@@ -19,8 +19,8 @@ export function FloatingBar({ children, className }: { children: React.ReactNode
 export function TabBar({ slug, unread = 0 }: { slug: string; unread?: number }) {
   const pathname = usePathname();
   const base = `/c/${slug}`;
-  // Order detail has its own action bar
-  if (pathname.startsWith(`${base}/orders/`)) return null;
+  // Order detail and the calculator have their own action bars
+  if (pathname.startsWith(`${base}/orders/`) || pathname === `${base}/calculator`) return null;
 
   const tabs = [
     { href: base, label: "Заказы", icon: Package, active: pathname === base },

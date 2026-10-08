@@ -1,3 +1,5 @@
+import type { CalcInput, QuoteLine } from "@/lib/pricing";
+
 export type Role = "client" | "staff" | "owner";
 export type OrderStatus = "accepted" | "design" | "printing" | "finishing" | "ready" | "delivered";
 export type DeliveryMethod = "pickup" | "delivery";
@@ -22,6 +24,7 @@ export type Profile = {
   full_name: string;
   phone: string | null;
   email: string | null;
+  pd_consent_at: string | null;
   created_at: string;
 };
 
@@ -37,9 +40,15 @@ export type Order = {
   delivery_method: DeliveryMethod;
   delivery_address: string | null;
   comment: string | null;
+  source: "staff" | "calculator";
+  calc: OrderCalc | null;
+  price: number | null;
   created_at: string;
   updated_at: string;
 };
+
+// The client's calculation behind a calculator request, as the server recalculated it
+export type OrderCalc = { input: CalcInput; lines: QuoteLine[]; total: number; price_list_updated_at: string };
 
 export type Message = {
   id: string;

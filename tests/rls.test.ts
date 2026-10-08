@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { DEFAULT_PRICE_LIST } from "../src/lib/pricing";
 
 config({ path: ".env.local" });
 
@@ -15,9 +16,9 @@ const run = Date.now();
 type Ctx = { companyId: string; clientId: string; staffId: string; orderId: string; messageId: string; faqId: string };
 const ctx: Record<"A" | "B", Ctx> = {} as never;
 const userIds: string[] = [];
-let clientA: SupabaseClient, clientA2: SupabaseClient, staffA: SupabaseClient, staffB: SupabaseClient, anon: SupabaseClient;
+let clientA: SupabaseClient, clientA2: SupabaseClient, staffA: SupabaseClient, staffB: SupabaseClient, ownerA: SupabaseClient, anon: SupabaseClient;
 
-async function createUser(slug: string, name: string, role: "client" | "staff") {
+async function createUser(slug: string, name: string, role: "client" | "staff" | "owner") {
   const { data, error } = await admin.auth.admin.createUser({
     email: `${name}-${run}@rls.test`,
     password: PASSWORD,
@@ -26,7 +27,7 @@ async function createUser(slug: string, name: string, role: "client" | "staff") 
   });
   if (error) throw error;
   userIds.push(data.user.id);
-  if (role === "staff") await admin.from("profiles").update({ role: "staff" }).eq("id", data.user.id);
+  if (role !== "client") await admin.from("profiles").update({ role }).eq("id", data.user.id);
   return data.user.id;
 }
 
@@ -39,6 +40,8 @@ async function setupCompany(key: "A" | "B") {
   const { data: o } = await admin.from("orders").insert({ company_id: c.id, client_id: clientId, title: `Order ${key}` }).select().single();
   const { data: m } = await admin.from("messages").insert({ company_id: c.id, client_id: clientId, sender_id: clientId, body: `Hi ${key}` }).select().single();
   const { data: f } = await admin.from("faqs").insert({ company_id: c.id, question: "Q", answer: "A" }).select().single();
+  await createUser(slug, `owner${key}`, "owner");
+  await admin.from("price_lists").insert({ company_id: c.id, config: DEFAULT_PRICE_LIST });
   ctx[key] = { companyId: c.id, clientId, staffId, orderId: o!.id, messageId: m!.id, faqId: f!.id };
 }
 
@@ -59,6 +62,7 @@ before(async () => {
   clientA2 = await signIn("clientA2");
   staffA = await signIn("staffA");
   staffB = await signIn("staffB");
+  ownerA = await signIn("ownerA");
   anon = createClient(URL, ANON, opts);
 });
 
@@ -136,6 +140,27 @@ describe("RLS: company isolation", () => {
     assert.notEqual(staffThread.error, null, "chat thread for a staff profile");
     const logo = await admin.from("companies").update({ logo_url: "http://127.0.0.1/x.png" }).eq("id", ctx.A.companyId);
     assert.notEqual(logo.error, null, "external logo_url");
+    const consent = await clientA.from("profiles").update({ pd_consent_at: new Date().toISOString() }).eq("id", ctx.A.clientId);
+    assert.notEqual(consent.error, null, "client forges the personal data consent time");
+  });
+
+  test("sign-up with consent stamps pd_consent_at, without it leaves it empty", async () => {
+    const slug = `rls-a-${run}`;
+    const stamped: Record<string, string | null> = {};
+    for (const consent of [true, false]) {
+      // A fresh client: signing up opens a session, and `anon` must stay anonymous for the other tests
+      const { data, error } = await createClient(URL, ANON, opts).auth.signUp({
+        email: `signup-${consent}-${run}@rls.test`,
+        password: PASSWORD,
+        options: { data: { company_slug: slug, full_name: "Signup", ...(consent && { pd_consent: true }) } },
+      });
+      assert.equal(error, null);
+      userIds.push(data.user!.id);
+      const { data: p } = await admin.from("profiles").select("pd_consent_at").eq("id", data.user!.id).single();
+      stamped[String(consent)] = p!.pd_consent_at;
+    }
+    assert.ok(stamped.true, "consent time recorded");
+    assert.equal(stamped.false, null);
   });
 
   test("anonymous user cannot read orders, messages or profiles", async () => {
@@ -223,5 +248,51 @@ describe("RLS: history, files, notifications, limits", () => {
   test("oversized fields are rejected", async () => {
     const { error } = await staffA.from("orders").insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, title: "x".repeat(201) });
     assert.notEqual(error, null, "201-char title accepted");
+  });
+});
+
+describe("RLS: price calculator", () => {
+  const changed = { ...DEFAULT_PRICE_LIST, banners: { ...DEFAULT_PRICE_LIST.banners, hemPerM: 99 } };
+  const hem = async (companyId: string) =>
+    (await admin.from("price_lists").select("config").eq("company_id", companyId).single()).data!.config.banners.hemPerM;
+
+  test("anyone can read price lists, even before signing in", async () => {
+    const { data } = await anon.from("price_lists").select("company_id").eq("company_id", ctx.A.companyId);
+    assert.equal(data?.length, 1);
+  });
+
+  test("only the owner changes prices, and only their own company's", async () => {
+    for (const [who, sb] of [["client", clientA], ["staff", staffA]] as const) {
+      const { data } = await sb.from("price_lists").update({ config: changed }).eq("company_id", ctx.A.companyId).select("company_id");
+      assert.equal(data?.length ?? 0, 0, `${who} updates the price list`);
+    }
+    const anonUpdate = await anon.from("price_lists").update({ config: changed }).eq("company_id", ctx.A.companyId);
+    assert.notEqual(anonUpdate.error, null, "anonymous update");
+    const { data: foreign } = await ownerA.from("price_lists").update({ config: changed }).eq("company_id", ctx.B.companyId).select("company_id");
+    assert.equal(foreign?.length ?? 0, 0, "owner A updates company B prices");
+    const foreignInsert = await ownerA.from("price_lists").insert({ company_id: ctx.B.companyId, config: changed });
+    assert.notEqual(foreignInsert.error, null, "owner A creates prices for company B");
+    assert.equal(await hem(ctx.A.companyId), DEFAULT_PRICE_LIST.banners.hemPerM);
+    assert.equal(await hem(ctx.B.companyId), DEFAULT_PRICE_LIST.banners.hemPerM);
+
+    const { data: own } = await ownerA.from("price_lists").update({ config: changed }).eq("company_id", ctx.A.companyId).select("company_id");
+    assert.equal(own?.length, 1);
+    assert.equal(await hem(ctx.A.companyId), 99);
+  });
+
+  test("clients cannot create orders; calculator fields are written only by the server", async () => {
+    const own = await clientA.from("orders").insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, title: "Cheap", price: 1 });
+    assert.notEqual(own.error, null, "client inserts an order with any price");
+    const forged = await staffA.from("orders").insert({
+      company_id: ctx.A.companyId, client_id: ctx.A.clientId, title: "x", source: "calculator", calc: { total: 1 },
+    });
+    assert.notEqual(forged.error, null, "staff forges a calculator request");
+    const calc = await staffA.from("orders").update({ calc: { total: 1 } }).eq("id", ctx.A.orderId);
+    assert.notEqual(calc.error, null, "staff rewrites the client's calculation");
+
+    const { data } = await staffA.from("orders").update({ price: 1500 }).eq("id", ctx.A.orderId).select("price");
+    assert.equal(data?.[0]?.price, 1500, "staff corrects the price");
+    const { data: other } = await staffB.from("orders").update({ price: 1 }).eq("id", ctx.A.orderId).select("id");
+    assert.equal(other?.length ?? 0, 0, "staff of another company changes the price");
   });
 });

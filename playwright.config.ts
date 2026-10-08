@@ -17,7 +17,7 @@ export default defineConfig({
     { name: "setup", testMatch: /auth\.setup\.ts/ },
     {
       name: "client",
-      testMatch: /client\.spec\.ts/,
+      testMatch: /(client|calculator)\.spec\.ts/,
       dependencies: ["setup"],
       use: { ...devices["Pixel 7"], browserName: "chromium" },
     },

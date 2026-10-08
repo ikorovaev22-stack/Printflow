@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function AuthForm({ mode, slug }: { mode: "login" | "register"; slug?: string }) {
+// next: the client app page to return to after signing in (already checked with safeNext)
+export function AuthForm({ mode, slug, next }: { mode: "login" | "register"; slug?: string; next?: string | null }) {
   const [state, action, pending] = useActionState(mode === "login" ? signIn : signUp, undefined);
 
   return (
     <form action={action} className="flex flex-col gap-4">
       {slug && <input type="hidden" name="slug" value={slug} />}
+      {next && <input type="hidden" name="next" value={next} />}
       {mode === "register" && (
         <>
           <Field name="full_name" label="Имя и фамилия" autoComplete="name" maxLength={120} required />
@@ -29,6 +31,17 @@ export function AuthForm({ mode, slug }: { mode: "login" | "register"; slug?: st
         maxLength={72}
         required
       />
+      {mode === "register" && slug && (
+        <label className="flex items-start gap-3 text-sm text-muted-foreground">
+          <input type="checkbox" name="pd_consent" required className="mt-0.5 size-5 shrink-0 accent-primary" />
+          <span>
+            Согласен на обработку персональных данных в соответствии с{" "}
+            <Link href={`/c/${slug}/privacy`} target="_blank" className="text-foreground underline underline-offset-4">
+              политикой конфиденциальности
+            </Link>
+          </span>
+        </label>
+      )}
       {mode === "login" && (
         <Link href={slug ? `/auth/forgot?slug=${slug}` : "/auth/forgot"} className="-mt-1 self-end text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
           Забыли пароль?
@@ -51,7 +64,7 @@ export function AuthForm({ mode, slug }: { mode: "login" | "register"; slug?: st
         <>
           <p className="text-center text-sm text-muted-foreground">{mode === "login" ? "Впервые здесь?" : "Уже есть аккаунт?"}</p>
           <Button asChild size="lg" variant="outline" className="w-full">
-            <Link href={`/c/${slug}/${mode === "login" ? "register" : "login"}`}>
+            <Link href={`/c/${slug}/${mode === "login" ? "register" : "login"}${next ? `?next=${encodeURIComponent(next)}` : ""}`}>
               {mode === "login" ? "Зарегистрироваться" : "Войти"}
             </Link>
           </Button>

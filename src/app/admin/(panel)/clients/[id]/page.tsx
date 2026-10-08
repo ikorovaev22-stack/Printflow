@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Mail, MessagesSquare, Phone, Plus } from "lucide-react";
+import { Mail, MessagesSquare, Phone, Plus, ShieldCheck } from "lucide-react";
 import { OrdersTable, type OrderRow } from "@/components/admin/orders-table";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,12 @@ export default async function ClientPage({ params }: PageProps<"/admin/clients/[
         <span className="flex items-center gap-2">
           <Mail className="size-4 text-muted-foreground" />
           <a href={`mailto:${client.email}`}>{client.email}</a>
+        </span>
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <ShieldCheck className="size-4" />
+          {client.pd_consent_at
+            ? `Согласие на обработку ПДн: ${formatDate(client.pd_consent_at, company.timezone)}`
+            : "Согласие на обработку ПДн не получено"}
         </span>
       </div>
       <h2 className="mb-3 text-lg font-semibold">Заказы</h2>

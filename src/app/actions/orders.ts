@@ -13,6 +13,7 @@ const opt = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim() || n
 export async function saveOrder(_: FormState, fd: FormData): Promise<FormState> {
   const { supabase, company } = await requireStaff();
   const id = opt(fd, "id");
+  const price = opt(fd, "price");
   const order = {
     client_id: opt(fd, "client_id"),
     title: opt(fd, "title"),
@@ -22,8 +23,12 @@ export async function saveOrder(_: FormState, fd: FormData): Promise<FormState> 
     delivery_method: opt(fd, "delivery_method") ?? "pickup",
     delivery_address: opt(fd, "delivery_address"),
     comment: opt(fd, "comment"),
+    price: price === null ? null : Number(price),
   };
   if (!order.client_id || !order.title) return { error: "Укажите клиента и название заказа" };
+  if (order.price !== null && (!Number.isInteger(order.price) || order.price < 0 || order.price > 100_000_000)) {
+    return { error: "Стоимость — целое число рублей" };
+  }
   if (order.title.length > 200) return { error: "Название не длиннее 200 символов" };
 
   const before = id ? (await supabase.from("orders").select("status").eq("id", id).maybeSingle()).data : null;

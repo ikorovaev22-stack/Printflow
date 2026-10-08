@@ -3,6 +3,7 @@ import { Package } from "lucide-react";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { DueDatePicker, StatusSelect } from "@/components/admin/order-quick-edit";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatRub } from "@/lib/format";
 import { DELIVERY_LABELS, type Order } from "@/lib/types";
 
 export type OrderRow = Order & { client: { id: string; full_name: string; email: string | null } | null };
@@ -31,6 +32,7 @@ export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[];
             <TableHead>Статус</TableHead>
             <TableHead>Срок</TableHead>
             <TableHead>Получение</TableHead>
+            <TableHead className="pr-5 text-right">Сумма</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -41,6 +43,9 @@ export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[];
                 <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline">
                   {o.title}
                 </Link>
+                {o.source === "calculator" && (
+                  <span className="ml-2 inline-flex h-6 items-center rounded-full bg-muted px-2.5 align-middle text-xs font-medium">Заявка</span>
+                )}
               </TableCell>
               {showClient && (
                 <TableCell>
@@ -58,6 +63,7 @@ export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[];
                 <DueDatePicker id={o.id} due={o.due_date} status={o.status} />
               </TableCell>
               <TableCell className="text-muted-foreground">{DELIVERY_LABELS[o.delivery_method]}</TableCell>
+              <TableCell className="pr-5 text-right tabular-nums">{o.price === null ? "—" : formatRub(o.price)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

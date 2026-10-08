@@ -2,8 +2,9 @@ import "server-only";
 import nodemailer from "nodemailer";
 import webpush from "web-push";
 import { SITE_URL } from "@/lib/config";
+import { formatRub } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { statusMeta, type Message, type OrderStatus } from "@/lib/types";
+import { statusMeta, type Message, type OrderCalc, type OrderStatus } from "@/lib/types";
 
 // Delivery is best-effort and runs after the response (next/server `after`): failures are logged, never thrown.
 // Every channel is optional: push needs VAPID keys + service role, email needs SMTP_HOST.
@@ -146,5 +147,54 @@ export async function notifyFileUploaded(orderId: string, name: string, fromClie
   await Promise.all([
     push(admin, [o.client_id], { title: o.company.name, body, url: path, tag: `files-${o.id}`, icon: icon(o.company.slug) }),
     email(o.client.email, o.company.name, `Файл к заказу №${o.number}`, `${body}.\n\nОткрыть заказ: ${link(path)}\n\n${o.company.name}`),
+  ]);
+}
+
+// Calculator request from a client: all staff get a push, the print shop's mailbox gets the full calculation
+export async function notifyOrderRequest(orderId: string) {
+  const admin = createAdminClient();
+  if (!admin) return;
+  const { data: o } = await admin
+    .from("orders")
+    .select("id, number, title, description, price, calc, company_id, company:companies(name, slug, email), client:profiles(full_name, email, phone)")
+    .eq("id", orderId)
+    .single<{
+      id: string;
+      number: number;
+      title: string;
+      description: string | null;
+      price: number | null;
+      calc: OrderCalc | null;
+      company_id: string;
+      company: { name: string; slug: string; email: string | null };
+      client: { full_name: string; email: string | null; phone: string | null };
+    }>();
+  if (!o) return;
+  const client = o.client.full_name || o.client.email || "Клиент";
+  const price = o.price === null ? "" : ` — ${formatRub(o.price)}`;
+  const path = `/admin/orders/${o.id}`;
+  const lines = (o.calc?.lines ?? []).map((l) => `  ${l.label} — ${formatRub(l.amount)}`).join("\n");
+  await Promise.all([
+    push(admin, await staffIds(admin, o.company_id), {
+      title: `Новая заявка №${o.number}`,
+      body: short(`${client}: ${o.title}${price}`),
+      url: path,
+      tag: `request-${o.id}`,
+      icon: icon(o.company.slug),
+    }),
+    email(
+      o.company.email,
+      o.company.name,
+      `Новая заявка №${o.number}: ${o.title}`,
+      [
+        `Заявка из калькулятора №${o.number}: ${o.title}`,
+        `Клиент: ${client}${o.client.phone ? `, ${o.client.phone}` : ""}${o.client.email ? `, ${o.client.email}` : ""}`,
+        "",
+        lines,
+        `Итого (предварительно): ${o.price === null ? "—" : formatRub(o.price)}`,
+        o.description ? `\nКомментарий клиента: ${o.description}` : "",
+        `\nОткрыть заявку: ${link(path)}`,
+      ].join("\n"),
+    ),
   ]);
 }
