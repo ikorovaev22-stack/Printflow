@@ -6,3 +6,4 @@ tests
 scripts
 supabase/.temp
 *.log
+deploy

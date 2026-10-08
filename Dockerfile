@@ -1,10 +1,15 @@
 # syntax=docker/dockerfile:1
-# Self-hosted image (Next.js standalone). Used by deploy/docker-compose.yml; see README → «Свой сервер».
+# Self-hosted image (Next.js standalone). Used by deploy/docker-compose.printflow.yml; see README → «Свой сервер в России».
 
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
+
+# One-off scripts on the server (create-company, seed): the `tools` service in deploy/docker-compose.printflow.yml
+FROM deps AS tools
+COPY . .
+ENTRYPOINT ["npx", "tsx"]
 
 FROM node:22-alpine AS build
 WORKDIR /app

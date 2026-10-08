@@ -1,0 +1,96 @@
+# PrintFlow on top of the official self-hosted Supabase (deploy/supabase, created by install.sh).
+#
+# install.sh adds this file to COMPOSE_FILE in deploy/supabase/.env, so every `sh run.sh …` and
+# `docker compose …` run inside deploy/supabase includes it. Relative paths below resolve against
+# deploy/supabase (the directory of the base docker-compose.yml). Variables come from deploy/supabase/.env:
+# the generated Supabase secrets plus the PRINTFLOW_* / VAPID_* values that install.sh writes there.
+
+services:
+  # The API gateway is reachable only through Caddy on sb.<domain>; nothing listens on :8000 publicly
+  api-gw:
+    ports: !reset []
+
+  # Studio (database admin): only through an SSH tunnel, see README
+  studio:
+    ports:
+      - "127.0.0.1:54333:3000"
+
+  # Not used by PrintFlow: the connection pooler (it would also expose Postgres on :5432) and Edge Functions
+  supavisor:
+    profiles: [unused]
+  functions:
+    profiles: [unused]
+
+  auth:
+    environment:
+      GOTRUE_PASSWORD_MIN_LENGTH: 8
+      # Links in these emails lead to the app's own domain (served by Caddy on the internal port 8088)
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://caddy:8088/confirmation.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://caddy:8088/recovery.html
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: Подтвердите email
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: Восстановление пароля
+      # Server-rendered pages call Auth from this host's address, so per-IP limits are shared by all clients
+      GOTRUE_RATE_LIMIT_TOKEN_REFRESH: 3600
+      GOTRUE_RATE_LIMIT_VERIFY: 360
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: 100
+
+  app:
+    container_name: printflow-app
+    build:
+      context: ../..
+      # NEXT_PUBLIC_* values are baked into the browser bundle at build time
+      args: &public
+        NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_PUBLIC_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL}
+        NEXT_PUBLIC_APP_NAME: ${PRINTFLOW_APP_NAME:-PrintFlow}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+    restart: unless-stopped
+    environment:
+      <<: *public
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      DEFAULT_COMPANY_SLUG: ${PRINTFLOW_DEFAULT_COMPANY_SLUG:-}
+      DEMO_MODE: "false"
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: mailto:${SMTP_ADMIN_EMAIL}
+      # The same mailbox as Supabase Auth; an empty SMTP_HOST turns client emails off
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_SENDER_NAME} <${SMTP_ADMIN_EMAIL}>
+    # Server-side Supabase calls go to Caddy on this host, not out and back in
+    extra_hosts:
+      - "sb.${PRINTFLOW_DOMAIN}:host-gateway"
+
+  caddy:
+    container_name: printflow-caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${PRINTFLOW_DOMAIN}
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../supabase/templates:/srv/mail-templates:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # One-off scripts on the server, talking to Supabase inside the Docker network:
+  #   docker compose run --rm tools scripts/create-company.ts --name … --slug … --email … --password …
+  tools:
+    profiles: [tools]
+    build:
+      context: ../..
+      target: tools
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: http://api-gw:8000
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL}
+
+volumes:
+  caddy_data:
+  caddy_config:

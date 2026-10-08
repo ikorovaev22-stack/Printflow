@@ -8,14 +8,21 @@
 	}
 }
 
-# Supabase through our own domain: REST, Auth, Storage and the Realtime websocket.
-# Browsers in Russia never contact *.supabase.co directly.
+# Self-hosted Supabase on this server: REST, Auth, Storage and the Realtime websocket.
+# Only the APIs the app uses are public; Studio is reachable through an SSH tunnel (see README).
 sb.{$DOMAIN} {
-	reverse_proxy https://{$SUPABASE_HOST} {
-		header_up Host {upstream_hostport}
-		header_up -X-Forwarded-Host
-		transport http {
-			tls_server_name {$SUPABASE_HOST}
-		}
+	@api path /auth/v1/* /rest/v1/* /realtime/v1/* /storage/v1/*
+	handle @api {
+		reverse_proxy api-gw:8000
 	}
+	handle {
+		respond 404
+	}
+	header -server
+}
+
+# Internal only (no published port): email templates that Supabase Auth downloads on start
+:8088 {
+	root * /srv/mail-templates
+	file_server
 }

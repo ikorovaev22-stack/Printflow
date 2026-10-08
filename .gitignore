@@ -45,3 +45,7 @@ next-env.d.ts
 /test-results
 /playwright-report
 /tests/e2e/.auth
+
+# self-hosted deploy: Supabase checkout with secrets and data, backups
+/deploy/supabase/
+/deploy/backups/
