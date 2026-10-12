@@ -57,6 +57,9 @@ export async function updateOrder(id: string, patch: { status?: OrderStatus; due
 
 export async function deleteOrder(id: string) {
   const { supabase } = await requireStaff();
+  // File rows cascade with the order, storage objects do not; storage policies need the order to exist, so remove them first
+  const { data: files } = await supabase.from("order_files").select("path").eq("order_id", id);
+  if (files?.length) await supabase.storage.from("order-files").remove(files.map((f) => f.path));
   const { data } = await supabase.from("orders").delete().eq("id", id).select("id");
   if (!data?.length) throw new Error("Не удалось удалить заказ");
   revalidatePath("/admin", "layout");

@@ -35,6 +35,62 @@ test.describe("signed-in owner", () => {
     await expect(page.getByRole("heading", { name: "История этапов" })).toBeVisible();
   });
 
+  test("deletes a message and clears a chat", async ({ page }) => {
+    await page.goto("/admin/chat");
+    await page.getByRole("link", { name: /Иван Кузнецов/ }).click();
+    await expect(page).toHaveURL(/\/admin\/chat\/[0-9a-f-]{36}$/);
+    const text = `Удалите меня, e2e ${Date.now()}`;
+    await page.getByRole("textbox", { name: "Сообщение" }).fill(text);
+    await page.getByRole("button", { name: "Отправить" }).click();
+    const sent = page.getByText(text);
+    await expect(sent).toBeVisible();
+
+    await sent.hover();
+    // The new message is the last one in the thread
+    await page.getByRole("button", { name: "Действия с сообщением" }).last().click();
+    await page.getByRole("menuitem", { name: "Удалить сообщение" }).click();
+    await expect(sent).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByText(text)).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Очистить переписку" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Очистить" }).click();
+    await expect(page.getByText("Сообщений пока нет")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Сообщений пока нет")).toBeVisible();
+  });
+
+  test("owner deletes a client with their account", async ({ page, browser }) => {
+    const email = `delete-me-${Date.now()}@example.com`;
+    const guest = await browser.newContext();
+    const signup = await guest.newPage();
+    await signup.goto("/c/demo/register");
+    await signup.waitForLoadState("networkidle");
+    await signup.getByLabel("Имя и фамилия").fill("Удаляемый Клиент");
+    await signup.getByLabel("Email").fill(email);
+    await signup.getByLabel("Пароль", { exact: true }).fill("Delete-me-1");
+    await signup.getByRole("checkbox", { name: /обработку персональных данных/ }).check();
+    await signup.getByRole("button", { name: "Создать аккаунт" }).click();
+    await expect(signup).toHaveURL(/\/c\/demo$/);
+    await guest.close();
+
+    await page.goto("/admin/clients");
+    await page.getByRole("link", { name: "Удаляемый Клиент" }).click();
+    await page.getByRole("button", { name: "Удалить" }).click();
+    await expect(page.getByRole("alertdialog")).toContainText("Удалить клиента «Удаляемый Клиент»?");
+    await page.getByRole("alertdialog").getByRole("button", { name: "Удалить" }).click();
+    await expect(page).toHaveURL(/\/admin\/clients$/);
+    await expect(page.getByRole("link", { name: "Удаляемый Клиент" })).toHaveCount(0);
+
+    await page.context().clearCookies();
+    await page.goto("/c/demo/login");
+    await page.waitForLoadState("networkidle");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Пароль", { exact: true }).fill("Delete-me-1");
+    await page.getByRole("button", { name: "Войти" }).click();
+    await expect(page.getByText("Неверный email или пароль")).toBeVisible();
+  });
+
   test("prices page previews a quote as prices change, without saving", async ({ page }) => {
     await page.getByRole("link", { name: "Цены" }).click();
     await expect(page.getByRole("heading", { name: "Пример расчёта" })).toBeVisible();

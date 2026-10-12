@@ -31,7 +31,7 @@ export function DeleteOrderButton({ id }: { id: string }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Отмена</AlertDialogCancel>
-          <AlertDialogAction onClick={() => deleteOrder(id).catch(() => toast.error("Не удалось удалить заказ"))} className="bg-destructive text-white hover:bg-destructive/90">
+          <AlertDialogAction variant="destructive" onClick={() => deleteOrder(id).catch(() => toast.error("Не удалось удалить заказ"))}>
             Удалить
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -171,6 +171,40 @@ describe("RLS: company isolation", () => {
   });
 });
 
+// Before the flood test: it uses up client A's message limit for the minute
+describe("RLS: deleting messages", () => {
+  const message = async (key: "A" | "B", from: "client" | "staff") => {
+    const sender = from === "client" ? ctx[key].clientId : ctx[key].staffId;
+    const { data, error } = await admin
+      .from("messages")
+      .insert({ company_id: ctx[key].companyId, client_id: ctx[key].clientId, sender_id: sender, body: `delete me (${from})` })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return data.id as string;
+  };
+  const exists = async (id: string) => (await admin.from("messages").select("id").eq("id", id)).data!.length === 1;
+
+  test("clients cannot delete messages, not even their own", async () => {
+    for (const id of [await message("A", "client"), await message("A", "staff")]) {
+      const { data } = await clientA.from("messages").delete().eq("id", id).select();
+      assert.equal(data?.length ?? 0, 0);
+      assert.ok(await exists(id), "message deleted by a client");
+    }
+  });
+
+  test("staff delete any message of their company, but not of another company", async () => {
+    const fromClient = await message("A", "client");
+    const del = await staffA.from("messages").delete().eq("id", fromClient).select();
+    assert.equal(del.data?.length, 1);
+    assert.equal(await exists(fromClient), false);
+    const foreign = await message("A", "client");
+    const hack = await staffB.from("messages").delete().eq("id", foreign).select();
+    assert.equal(hack.data?.length ?? 0, 0);
+    assert.ok(await exists(foreign), "message deleted by staff of another company");
+  });
+});
+
 const pdf = () => new Blob(["%PDF-1.4 test"], { type: "application/pdf" });
 
 describe("RLS: history, files, notifications, limits", () => {

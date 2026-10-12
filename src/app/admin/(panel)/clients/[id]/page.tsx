@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Mail, MessagesSquare, Phone, Plus, ShieldCheck } from "lucide-react";
+import { DeleteClientButton } from "@/components/admin/delete-client-button";
 import { OrdersTable, type OrderRow } from "@/components/admin/orders-table";
 import { PageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import type { Profile } from "@/lib/types";
 
 export default async function ClientPage({ params }: PageProps<"/admin/clients/[id]">) {
   const { id } = await params;
-  const { supabase, company } = await requireStaff();
+  const { supabase, company, profile } = await requireStaff();
   const [{ data: client }, { data: orders }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).eq("role", "client").maybeSingle<Profile>(),
     supabase.from("orders").select("*").eq("client_id", id).order("created_at", { ascending: false }).returns<OrderRow[]>(),
@@ -30,6 +31,9 @@ export default async function ClientPage({ params }: PageProps<"/admin/clients/[
             <Plus /> Новый заказ
           </Link>
         </Button>
+        {profile.role === "owner" && (
+          <DeleteClientButton id={client.id} name={client.full_name || client.email || "Без имени"} orders={orders?.length ?? 0} />
+        )}
       </PageHeader>
       <div className="mb-6 flex flex-wrap gap-6 rounded-card bg-card p-5 text-sm">
         <span className="flex items-center gap-2">

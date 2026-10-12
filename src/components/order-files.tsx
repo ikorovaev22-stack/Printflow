@@ -120,7 +120,7 @@ export function OrderFiles({ orderId, companyId, files, meId, side }: Props) {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Отмена</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => remove(f.id)} className="bg-destructive text-white hover:bg-destructive/90">
+                        <AlertDialogAction variant="destructive" onClick={() => remove(f.id)}>
                           Удалить
                         </AlertDialogAction>
                       </AlertDialogFooter>

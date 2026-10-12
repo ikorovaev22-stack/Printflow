@@ -1,7 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, requireStaff } from "@/lib/auth";
 import { notifyMessage } from "@/lib/notify";
 import type { Message } from "@/lib/types";
 
@@ -24,4 +25,21 @@ export async function sendMessage(clientId: string, body: string): Promise<{ mes
   }
   after(() => notifyMessage(data));
   return { message: data };
+}
+
+// Staff only (RLS): any message of their company. Clients cannot delete — the flood limit counts stored messages
+export async function deleteMessage(id: string): Promise<{ error?: string }> {
+  const { supabase } = await requireStaff();
+  const { data } = await supabase.from("messages").delete().eq("id", id).select("id");
+  if (!data?.length) return { error: "Не удалось удалить сообщение" };
+  revalidatePath("/admin", "layout");
+  return {};
+}
+
+export async function clearChat(clientId: string): Promise<{ error?: string }> {
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.from("messages").delete().eq("client_id", clientId);
+  if (error) return { error: "Не удалось очистить переписку" };
+  revalidatePath("/admin", "layout");
+  return {};
 }
