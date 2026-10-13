@@ -60,6 +60,9 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
   if (!isTimeZone(timezone)) return { error: "Неизвестный часовой пояс" };
   const logoUrl = opt(fd, "logo_url");
   if (logoUrl && !logoSrc({ id: company.id, logo_url: logoUrl })) return { error: "Недопустимый адрес логотипа" };
+  // "@name", "t.me/name" and "https://t.me/name" all become "name"
+  const telegram = opt(fd, "telegram")?.replace(/^(https?:\/\/)?(t\.me|telegram\.me)\//i, "").replace(/^@/, "") || null;
+  if (telegram && !/^[A-Za-z0-9_]{5,32}$/.test(telegram)) return { error: "Telegram: имя из латиницы, цифр и _, от 5 до 32 символов" };
 
   const { error } = await supabase
     .from("companies")
@@ -71,6 +74,7 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
       email: opt(fd, "email"),
       address: opt(fd, "address"),
       work_hours: opt(fd, "work_hours"),
+      telegram,
       timezone,
     })
     .eq("id", company.id);
@@ -83,4 +87,63 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
 
   revalidatePath("/", "layout");
   return { message: "Настройки сохранены" };
+}
+
+// Banners: the owner uploads the image straight to storage ("banners/<company_id>/..."), then registers it here
+async function requireOwner() {
+  const session = await requireStaff();
+  if (session.profile.role !== "owner") throw new Error("Баннеры меняет только владелец");
+  return session;
+}
+
+export async function addBanner(path: string): Promise<{ error?: string }> {
+  const { supabase, company, profile } = await requireStaff();
+  if (profile.role !== "owner") return { error: "Баннеры меняет только владелец" };
+  const file = path.startsWith(`${company.id}/`) ? path.slice(company.id.length + 1) : "";
+  if (!/^[\w.-]{1,100}$/.test(file)) return { error: "Недопустимый файл" };
+  const { data: last } = await supabase
+    .from("banners")
+    .select("position")
+    .eq("company_id", company.id)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const { error } = await supabase.from("banners").insert({ company_id: company.id, path, position: (last?.position ?? -1) + 1 });
+  if (error) {
+    await supabase.storage.from("banners").remove([path]);
+    return { error: error.message.includes("banner_limit") ? "Не больше 10 баннеров" : "Не удалось добавить баннер" };
+  }
+  revalidatePath("/", "layout");
+  return {};
+}
+
+export async function saveBannerTitle(id: string, title: string) {
+  const { supabase } = await requireOwner();
+  const { data } = await supabase
+    .from("banners")
+    .update({ title: title.trim().slice(0, 120) || null })
+    .eq("id", id)
+    .select("id");
+  if (!data?.length) throw new Error("Не удалось сохранить подпись");
+  revalidatePath("/", "layout");
+}
+
+export async function deleteBanner(id: string) {
+  const { supabase } = await requireOwner();
+  const { data } = await supabase.from("banners").delete().eq("id", id).select("path");
+  if (!data?.length) throw new Error("Не удалось удалить баннер");
+  await supabase.storage.from("banners").remove([data[0].path]);
+  revalidatePath("/", "layout");
+}
+
+export async function moveBanner(id: string, dir: -1 | 1) {
+  const { supabase, company } = await requireOwner();
+  const { data } = await supabase.from("banners").select("id, position").eq("company_id", company.id).order("position");
+  const list = data ?? [];
+  const i = list.findIndex((b) => b.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  await Promise.all(list.map((b, position) => supabase.from("banners").update({ position }).eq("id", b.id)));
+  revalidatePath("/", "layout");
 }

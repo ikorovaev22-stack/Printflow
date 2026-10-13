@@ -14,6 +14,7 @@ export type Company = {
   email: string | null;
   address: string | null;
   work_hours: string | null;
+  telegram: string | null;
   timezone: string;
 };
 
@@ -74,6 +75,8 @@ export type OrderFile = {
   mime: string | null;
   created_at: string;
 };
+
+export type Banner = { id: string; company_id: string; path: string; title: string | null; position: number };
 
 export type Faq = { id: string; company_id: string; question: string; answer: string; position: number };
 

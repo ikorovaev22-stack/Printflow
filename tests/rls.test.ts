@@ -69,6 +69,10 @@ before(async () => {
 after(async () => {
   const { data: files } = await admin.from("order_files").select("path").in("company_id", [ctx.A?.companyId, ctx.B?.companyId].filter(Boolean));
   if (files?.length) await admin.storage.from("order-files").remove(files.map((f) => f.path));
+  for (const id of [ctx.A?.companyId, ctx.B?.companyId].filter(Boolean)) {
+    const { data: images } = await admin.storage.from("banners").list(id);
+    if (images?.length) await admin.storage.from("banners").remove(images.map((f) => `${id}/${f.name}`));
+  }
   for (const id of userIds) await admin.auth.admin.deleteUser(id);
   await admin.from("companies").delete().in("id", [ctx.A?.companyId, ctx.B?.companyId].filter(Boolean));
 });
@@ -328,5 +332,56 @@ describe("RLS: price calculator", () => {
     assert.equal(data?.[0]?.price, 1500, "staff corrects the price");
     const { data: other } = await staffB.from("orders").update({ price: 1 }).eq("id", ctx.A.orderId).select("id");
     assert.equal(other?.length ?? 0, 0, "staff of another company changes the price");
+  });
+});
+
+describe("RLS: banners and Telegram", () => {
+  // 1×1 PNG
+  const png = new Blob([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64")], {
+    type: "image/png",
+  });
+
+  test("only the owner adds banners and uploads their images, only into their own company", async () => {
+    const path = `${ctx.A.companyId}/promo-${run}.png`;
+    for (const [who, sb] of [["client", clientA], ["staff", staffA]] as const) {
+      const upload = await sb.storage.from("banners").upload(`${ctx.A.companyId}/${who}-${run}.png`, png, { contentType: "image/png" });
+      assert.notEqual(upload.error, null, `${who} uploads a banner image`);
+      const insert = await sb.from("banners").insert({ company_id: ctx.A.companyId, path });
+      assert.notEqual(insert.error, null, `${who} adds a banner`);
+    }
+    const foreignUpload = await ownerA.storage.from("banners").upload(`${ctx.B.companyId}/x-${run}.png`, png, { contentType: "image/png" });
+    assert.notEqual(foreignUpload.error, null, "owner A uploads into company B");
+    const foreignInsert = await ownerA.from("banners").insert({ company_id: ctx.B.companyId, path: `${ctx.B.companyId}/x.png` });
+    assert.notEqual(foreignInsert.error, null, "owner A adds a banner to company B");
+    const outside = await ownerA.from("banners").insert({ company_id: ctx.A.companyId, path: `${ctx.B.companyId}/x.png` });
+    assert.notEqual(outside.error, null, "banner path outside the company folder");
+
+    assert.equal((await ownerA.storage.from("banners").upload(path, png, { contentType: "image/png" })).error, null);
+    const { data: banner, error } = await ownerA.from("banners").insert({ company_id: ctx.A.companyId, path, title: "Акция" }).select().single();
+    assert.equal(error, null);
+    const { data: seen } = await anon.from("banners").select("id").eq("company_id", ctx.A.companyId);
+    assert.equal(seen?.length, 1, "banners are public, like the company card");
+    const { data: byStaff } = await staffA.from("banners").delete().eq("id", banner!.id).select("id");
+    assert.equal(byStaff?.length ?? 0, 0, "staff deletes a banner");
+    const { data: byOwner } = await ownerA.from("banners").delete().eq("id", banner!.id).select("id");
+    assert.equal(byOwner?.length, 1);
+    const removed = await ownerA.storage.from("banners").remove([path]);
+    assert.equal(removed.data?.length, 1, "owner removes the image");
+  });
+
+  test("at most 10 banners per company", async () => {
+    const rows = Array.from({ length: 10 }, (_, i) => ({ company_id: ctx.B.companyId, path: `${ctx.B.companyId}/limit-${i}.png`, position: i }));
+    assert.equal((await admin.from("banners").insert(rows)).error, null);
+    const extra = await admin.from("banners").insert({ company_id: ctx.B.companyId, path: `${ctx.B.companyId}/limit-10.png` });
+    assert.notEqual(extra.error, null);
+  });
+
+  test("Telegram is a plain username, set by the owner", async () => {
+    const link = await ownerA.from("companies").update({ telegram: "https://t.me/print_shop" }).eq("id", ctx.A.companyId);
+    assert.notEqual(link.error, null, "a link instead of a username");
+    const { data: byStaff } = await staffA.from("companies").update({ telegram: "print_shop" }).eq("id", ctx.A.companyId).select("id");
+    assert.equal(byStaff?.length ?? 0, 0, "staff changes the company card");
+    const { data } = await ownerA.from("companies").update({ telegram: "print_shop" }).eq("id", ctx.A.companyId).select("telegram");
+    assert.equal(data?.[0]?.telegram, "print_shop");
   });
 });

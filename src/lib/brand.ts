@@ -29,3 +29,8 @@ export function logoSrc(company: { id: string; logo_url: string | null }) {
   const prefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/logos/${company.id}/`;
   return company.logo_url?.startsWith(prefix) && !company.logo_url.slice(prefix.length).includes("/") ? company.logo_url : null;
 }
+
+// Banner images live in the public "banners" bucket; the path is checked by the database ("<company_id>/<file>")
+export function bannerSrc(path: string) {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/banners/${path}`;
+}

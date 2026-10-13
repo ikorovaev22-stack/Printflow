@@ -1,6 +1,7 @@
 // Creates the print shop and its owner account.
 // Usage: npm run create-company -- --name "Типография «Оттиск»" --slug ottisk --email owner@ottisk.ru --password 'S3cure-pass' \
 //          [--owner "Мария Петрова"] [--phone "+7 (495) 123-45-67"] [--address "Москва, ..."] [--hours "Пн–Пт 9:00–20:00"]
+//          [--telegram ottisk_print]
 //          [--color "#4f46e5"] [--timezone "Europe/Moscow"]
 import { parseArgs } from "node:util";
 import { config } from "dotenv";
@@ -19,6 +20,7 @@ const { values: a } = parseArgs({
     phone: { type: "string" },
     address: { type: "string" },
     hours: { type: "string" },
+    telegram: { type: "string" },
     color: { type: "string", default: "#1c1c1e" },
     timezone: { type: "string", default: "Europe/Moscow" },
   },
@@ -33,6 +35,8 @@ if (!a.name || !a.slug || !a.email || !a.password) fail("Нужны --name, --sl
 if (!/^[a-z0-9-]+$/.test(a.slug)) fail("--slug: только латиница в нижнем регистре, цифры и дефис (например, ottisk)");
 if (a.password.length < 8) fail("--password: не короче 8 символов");
 if (!/^#[0-9a-fA-F]{6}$/.test(a.color!)) fail("--color: формат #RRGGBB");
+const telegram = a.telegram?.replace(/^(https?:\/\/)?(t\.me|telegram\.me)\//i, "").replace(/^@/, "") || null;
+if (telegram && !/^[A-Za-z0-9_]{5,32}$/.test(telegram)) fail("--telegram: имя из латиницы, цифр и _, от 5 до 32 символов");
 if (!Intl.supportedValuesOf("timeZone").includes(a.timezone!)) fail(`--timezone: неизвестный часовой пояс ${a.timezone}`);
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -51,6 +55,7 @@ async function main() {
       email: a.email,
       address: a.address ?? null,
       work_hours: a.hours ?? null,
+      telegram,
       timezone: a.timezone,
     })
     .select()

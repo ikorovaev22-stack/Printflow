@@ -109,8 +109,9 @@ export function SettingsForm({ company }: { company: Company }) {
           <h2 className="font-semibold md:col-span-2">Контакты</h2>
           <Field label="Телефон" name="phone" type="tel" defaultValue={company.phone ?? ""} maxLength={40} />
           <Field label="Email" name="email" type="email" defaultValue={company.email ?? ""} maxLength={254} />
-          <Field label="Адрес" name="address" defaultValue={company.address ?? ""} maxLength={300} className="md:col-span-2" />
+          <Field label="Telegram" name="telegram" defaultValue={company.telegram ? `@${company.telegram}` : ""} placeholder="@typography" maxLength={60} />
           <Field label="Часы работы" name="work_hours" defaultValue={company.work_hours ?? ""} placeholder="Пн–Пт 9:00–20:00" maxLength={200} />
+          <Field label="Адрес" name="address" defaultValue={company.address ?? ""} maxLength={300} className="md:col-span-2" />
           <div className="flex flex-col gap-2">
             <Label htmlFor="timezone">Часовой пояс</Label>
             <Select name="timezone" defaultValue={company.timezone}>

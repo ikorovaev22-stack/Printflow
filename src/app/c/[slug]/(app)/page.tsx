@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, ChevronRight, Package, PackageCheck, Phone, Store, Truck } from "lucide-react";
 import { CompanyLogo } from "@/components/company-logo";
+import { BannerStrip } from "@/components/client/banner-strip";
 import { CalculatorCard } from "@/components/client/calculator-entry";
 import { InstallBanner } from "@/components/client/install-banner";
 import { Halftone } from "@/components/client/halftone";
@@ -11,6 +12,7 @@ import { STATUS_ICONS, StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { requireClient } from "@/lib/auth";
+import { getBanners } from "@/lib/banners";
 import { getPriceList } from "@/lib/price-list";
 import { isEnabled } from "@/lib/pricing";
 import { formatDateShort, greeting } from "@/lib/format";
@@ -23,9 +25,10 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
   const { slug } = await params;
   const { view } = (await searchParams) as { view?: string };
   const { supabase, profile, company } = await requireClient(slug);
-  const [{ data }, prices] = await Promise.all([
+  const [{ data }, prices, banners] = await Promise.all([
     supabase.from("orders").select("*").eq("client_id", profile.id).order("created_at", { ascending: false }).returns<Order[]>(),
     getPriceList(company.id),
+    getBanners(company.id),
   ]);
   const calculator = !!prices && isEnabled(prices.prices);
   const orders = data ?? [];
@@ -65,6 +68,7 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
       <RealtimeRefresh table="orders" filter={`client_id=eq.${profile.id}`} />
       <InstallBanner />
       {calculator && !!data?.length && <CalculatorCard slug={slug} />}
+      {!archive && <BannerStrip banners={banners} className="mb-5" />}
 
       <nav aria-label="Фильтр заказов" className="mb-5 flex gap-2">
         <FilterChip href={`/c/${slug}`} active={!archive} label="Текущие" count={current.length} />

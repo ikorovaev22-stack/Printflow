@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
-import { Clock, Mail, MapPin, Navigation, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, Phone, Route, Send } from "lucide-react";
 import { CompanyLogo } from "@/components/company-logo";
+import { BannerStrip } from "@/components/client/banner-strip";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { getCompanyBySlug } from "@/lib/auth";
+import { getBanners } from "@/lib/banners";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "О компании" };
 
@@ -10,20 +13,24 @@ export default async function AboutScreen({ params }: PageProps<"/c/[slug]/about
   const { slug } = await params;
   const company = await getCompanyBySlug(slug);
   if (!company) notFound();
+  const banners = await getBanners(company.id);
   const tel = company.phone && `tel:${company.phone.replace(/[^\d+]/g, "")}`;
   const mail = company.email && `mailto:${company.email}`;
   const map = company.address && `https://yandex.ru/maps/?text=${encodeURIComponent(company.address)}`;
+  const telegram = company.telegram && `https://t.me/${company.telegram}`;
 
   const actions = [
     { icon: Phone, label: "Позвонить", href: tel },
+    { icon: Send, label: "Telegram", href: telegram },
     { icon: Mail, label: "Написать", href: mail },
-    { icon: Navigation, label: "Маршрут", href: map },
+    { icon: Route, label: "Маршрут", href: map },
   ].filter((a) => a.href) as { icon: React.ElementType; label: string; href: string }[];
 
   const rows = [
     { icon: MapPin, label: "Адрес", value: company.address },
     { icon: Clock, label: "Часы работы", value: company.work_hours },
     { icon: Phone, label: "Телефон", value: company.phone },
+    { icon: Send, label: "Telegram", value: company.telegram && `@${company.telegram}` },
     { icon: Mail, label: "Email", value: company.email },
   ].filter((r) => r.value);
 
@@ -36,7 +43,7 @@ export default async function AboutScreen({ params }: PageProps<"/c/[slug]/about
           {company.address && <p className="mt-1 text-sm text-muted-foreground">{company.address}</p>}
         </div>
         {!!actions.length && (
-          <div className="mt-2 flex justify-center gap-6">
+          <div className={cn("mt-2 flex justify-center", actions.length > 3 ? "gap-4" : "gap-6")}>
             {actions.map((a) => (
               <a
                 key={a.label}
@@ -74,6 +81,12 @@ export default async function AboutScreen({ params }: PageProps<"/c/[slug]/about
         </>
       )}
 
+      {!!banners.length && (
+        <>
+          <SectionTitle>Акции и услуги</SectionTitle>
+          <BannerStrip banners={banners} />
+        </>
+      )}
     </Screen>
   );
 }
