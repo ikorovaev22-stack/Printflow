@@ -126,7 +126,7 @@ export function Chat({ clientId, side, initialMessages, empty, header }: Props) 
           {side === "staff" && messages.length > 0 && <ClearChatButton onConfirm={clear} />}
         </header>
       )}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-5" aria-live="polite">
+      <div role="log" aria-label="Переписка" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-5">
         {!messages.length && empty}
         {messages.map((m, i) => {
           const mine = m.from_client === (side === "client");

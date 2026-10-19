@@ -36,23 +36,33 @@ test.describe("signed-in owner", () => {
   });
 
   test("deletes a message and clears a chat", async ({ page }) => {
-    await page.goto("/admin/chat");
-    await page.getByRole("link", { name: /Иван Кузнецов/ }).click();
+    // Through the client card: the thread may be empty (the test clears it), then it is not in the dialog list
+    await page.goto("/admin/clients");
+    await page.getByRole("link", { name: "Иван Кузнецов" }).click();
+    await page.getByRole("link", { name: "Написать" }).click();
     await expect(page).toHaveURL(/\/admin\/chat\/[0-9a-f-]{36}$/);
     const text = `Удалите меня, e2e ${Date.now()}`;
     await page.getByRole("textbox", { name: "Сообщение" }).fill(text);
     await page.getByRole("button", { name: "Отправить" }).click();
-    const sent = page.getByText(text);
+    // In the thread itself: the dialog list shows the same text as a preview, sometimes before the thread does.
+    // includeHidden: an open menu hides the rest of the page from the accessibility tree
+    const thread = page.getByRole("log", { name: "Переписка", includeHidden: true });
+    const sent = thread.getByText(text);
     await expect(sent).toBeVisible();
 
-    await sent.hover();
-    // The new message is the last one in the thread
-    await page.getByRole("button", { name: "Действия с сообщением" }).last().click();
+    const row = thread.locator(":scope > div").filter({ hasText: text });
+    await row.hover();
+    await row.getByRole("button", { name: "Действия с сообщением" }).click();
     await page.getByRole("menuitem", { name: "Удалить сообщение" }).click();
     await expect(sent).toHaveCount(0);
     await page.reload();
     await expect(page.getByText(text)).toHaveCount(0);
 
+    // Something to clear, whatever the thread held before
+    const another = `Очистите меня, e2e ${Date.now()}`;
+    await page.getByRole("textbox", { name: "Сообщение" }).fill(another);
+    await page.getByRole("button", { name: "Отправить" }).click();
+    await expect(thread.getByText(another)).toBeVisible();
     await page.getByRole("button", { name: "Очистить переписку" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Очистить" }).click();
     await expect(page.getByText("Сообщений пока нет")).toBeVisible();
