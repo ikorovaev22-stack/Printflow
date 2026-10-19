@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { brandStyle } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import type { Company } from "@/lib/types";
@@ -38,6 +39,7 @@ export function SettingsForm({ company }: { company: Company }) {
   const [name, setName] = useState(company.name);
   const [color, setColor] = useState(company.brand_color);
   const [logo, setLogo] = useState(company.logo_url);
+  const [finishing, setFinishing] = useState(company.finishing_stage);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const validColor = /^#[0-9a-fA-F]{6}$/.test(color);
@@ -110,6 +112,16 @@ export function SettingsForm({ company }: { company: Company }) {
           <Field label="Телефон" name="phone" type="tel" defaultValue={company.phone ?? ""} maxLength={40} />
           <Field label="Email" name="email" type="email" defaultValue={company.email ?? ""} maxLength={254} />
           <Field label="Telegram" name="telegram" defaultValue={company.telegram ? `@${company.telegram}` : ""} placeholder="@typography" maxLength={60} />
+          <Field
+            label="MAX — ссылка на профиль"
+            name="max_url"
+            inputMode="url"
+            defaultValue={company.max_url ?? ""}
+            placeholder="https://max.ru/u/…"
+            maxLength={300}
+            hint="В MAX: профиль → значок QR-кода → «Поделиться»"
+          />
+          <Field label="MAX — номер" name="max_phone" type="tel" defaultValue={company.max_phone ?? ""} placeholder="Если отличается от телефона" maxLength={40} />
           <Field label="Часы работы" name="work_hours" defaultValue={company.work_hours ?? ""} placeholder="Пн–Пт 9:00–20:00" maxLength={200} />
           <Field label="Адрес" name="address" defaultValue={company.address ?? ""} maxLength={300} className="md:col-span-2" />
           <div className="flex flex-col gap-2">
@@ -130,6 +142,18 @@ export function SettingsForm({ company }: { company: Company }) {
                 </SelectGroup>
               </SelectContent>
             </Select>
+          </div>
+        </section>
+        <section className="flex flex-col gap-4">
+          <h2 className="font-semibold">Этапы заказа</h2>
+          <div className="flex items-start justify-between gap-4">
+            <Label htmlFor="finishing_stage" className="flex flex-col items-start gap-1 font-normal">
+              <span className="font-medium">Постпечать</span>
+              <span className="text-sm text-muted-foreground">
+                Резка, ламинация, переплёт — между «Печать» и «Готов». Если выключить, заказы с этого этапа вернутся в «Печать».
+              </span>
+            </Label>
+            <Switch id="finishing_stage" name="finishing_stage" checked={finishing} onCheckedChange={setFinishing} />
           </div>
         </section>
         <div>
@@ -155,7 +179,7 @@ export function SettingsForm({ company }: { company: Company }) {
             <p className="text-[10px] text-white/60">Заказ №12</p>
             <p className="text-sm font-semibold">Визитки 500 шт.</p>
             <div className="mt-3 flex gap-1">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
+              {Array.from({ length: finishing ? 6 : 5 }, (_, i) => (
                 <div key={i} className={`h-1 flex-1 rounded-full ${i < 3 ? "bg-white" : "bg-white/20"}`} />
               ))}
             </div>
@@ -181,11 +205,16 @@ export function SettingsForm({ company }: { company: Company }) {
   );
 }
 
-function Field({ label, className, ...props }: { label: string } & React.ComponentProps<"input">) {
+function Field({ label, hint, className, ...props }: { label: string; hint?: string } & React.ComponentProps<"input">) {
   return (
     <div className={`flex flex-col gap-2 ${className ?? ""}`}>
       <Label htmlFor={props.name}>{label}</Label>
-      <Input id={props.name} {...props} />
+      <Input id={props.name} aria-describedby={hint ? `${props.name}-hint` : undefined} {...props} />
+      {hint && (
+        <p id={`${props.name}-hint`} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

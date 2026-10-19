@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { formatRub } from "../../src/lib/format";
-import { DEFAULT_PRICE_LIST, quote, type BannersInput, type CardsInput } from "../../src/lib/pricing";
+import { DEFAULT_PRICE_LIST, quote, type BannersInput, type CalcInput, type CardsInput, type ItemInput } from "../../src/lib/pricing";
 import { CLIENT, CLIENT_STATE, OWNER_STATE, PASSWORD } from "./helpers";
 
 // The demo company uses the default price list (npm run seed), so the expected sums come from the same function
-const total = (input: CardsInput | BannersInput) => formatRub(quote(input, DEFAULT_PRICE_LIST).total);
+const total = (input: CalcInput) => formatRub(quote(input, DEFAULT_PRICE_LIST).total);
 const choose = (page: Page, group: string, option: string) =>
   page.getByRole("radiogroup", { name: group }).getByText(option, { exact: true }).click();
 const shownTotal = (page: Page) => page.getByRole("region", { name: "Итог расчёта" }).locator("[aria-live]");
@@ -75,5 +75,22 @@ test.describe("signed-in client", () => {
     await expect(admin.getByText("Срочность +50%")).toBeVisible();
     await expect(admin.locator("input[name=price]")).toHaveValue(String(quote(cards, DEFAULT_PRICE_LIST).total));
     await staff.close();
+  });
+
+  test("orders an own item with a layout attached; the file lands in the order", async ({ page }) => {
+    await page.goto("/c/demo/calculator");
+    await choose(page, "Что печатаем", "Листовки А5");
+    await choose(page, "Тираж", "500");
+    await choose(page, "Печать", "Двусторонняя (4+4)");
+    const flyers: ItemInput = { product: "item", item: "flyers", qty: 500, options: { paper: "c130", sides: "s44" }, extras: [], urgent: false };
+    await expect(shownTotal(page)).toHaveText(total(flyers));
+
+    await page.getByLabel("Файлы макета").setInputFiles({ name: "maket.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.3\n%%EOF\n") });
+    await expect(page.getByText("maket.pdf")).toBeVisible();
+    await page.getByRole("button", { name: "Оформить заказ" }).click();
+
+    await expect(page).toHaveURL(/\/c\/demo\/orders\/[0-9a-f-]{36}$/);
+    await expect(page.getByRole("heading", { name: "Листовки А5, 500 шт." })).toBeVisible();
+    await expect(page.getByText("maket.pdf")).toBeVisible();
   });
 });

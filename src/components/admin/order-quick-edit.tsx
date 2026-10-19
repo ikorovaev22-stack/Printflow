@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { useStatuses } from "@/components/statuses";
 import { useTimeZone } from "@/components/time-zone";
 import { formatDateShort, toISODate, todayISO } from "@/lib/format";
-import { STATUSES, type OrderStatus } from "@/lib/types";
+import type { OrderStatus } from "@/lib/types";
 
 function useUpdate(id: string) {
   const [pending, start] = useTransition();
@@ -30,13 +31,14 @@ function useUpdate(id: string) {
 
 export function StatusSelect({ id, status }: { id: string; status: OrderStatus }) {
   const [pending, run] = useUpdate(id);
+  const statuses = useStatuses();
   return (
     <Select value={status} onValueChange={(v) => run({ status: v as OrderStatus })} disabled={pending}>
       <SelectTrigger size="sm" className="h-8 w-[140px] border-none bg-transparent px-1 shadow-none">
         <StatusBadge status={status} />
       </SelectTrigger>
       <SelectContent position="popper">
-        {STATUSES.map((s) => (
+        {statuses.map((s) => (
           <SelectItem key={s.value} value={s.value}>
             <StatusBadge status={s.value} />
           </SelectItem>

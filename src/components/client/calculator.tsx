@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useMemo, useState, useTransition } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus } from "lucide-react";
+import { File as FileIcon, Minus, Paperclip, Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { requestOrder } from "@/app/actions/calculator";
 import { Halftone } from "@/components/client/halftone";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { FloatingBar } from "@/components/client/tab-bar";
+import { uploadOrderFile } from "@/components/order-files";
 import { QuoteLines } from "@/components/quote-lines";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -15,7 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { formatRub } from "@/lib/format";
+import { FILE_ACCEPT, fileProblem } from "@/lib/files";
+import { formatRub, formatSize } from "@/lib/format";
 import {
   BANNER_MATERIALS,
   CARD_PAPERS,
@@ -25,36 +28,49 @@ import {
   GROMMET_STEPS,
   LAMINATIONS,
   POCKETS,
-  PRODUCTS,
   defaultInput,
   inputToSearch,
   laminable,
+  productKey,
+  productList,
   quote,
   roundDim,
   type BannersInput,
   type CalcInput,
   type CardsInput,
+  type ItemInput,
   type PriceList,
-  type Product,
+  type ProductKey,
 } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
-type Props = { slug: string; prices: PriceList; initial: CalcInput; signedIn: boolean };
+type Props = { slug: string; companyId: string; prices: PriceList; initial: CalcInput; signedIn: boolean };
 
-export function Calculator({ slug, prices, initial, signedIn }: Props) {
+// Layouts attached before the order exists; uploaded into it right after the request
+const MAX_FILES = 10;
+
+export function Calculator({ slug, companyId, prices, initial, signedIn }: Props) {
   const router = useRouter();
-  const [product, setProduct] = useState<Product>(initial.product);
+  const [product, setProduct] = useState<ProductKey>(productKey(initial));
   const [cards, setCards] = useState(() => (initial.product === "cards" ? initial : (defaultInput("cards", prices) as CardsInput)));
   const [banners, setBanners] = useState(() =>
     initial.product === "banners" ? initial : (defaultInput("banners", prices) as BannersInput),
   );
+  // Own items keep their options while the client switches between products
+  const [items, setItems] = useState<Record<string, ItemInput>>(() => (initial.product === "item" ? { [initial.item]: initial } : {}));
+  const itemId = product.startsWith("item:") ? product.slice(5) : null;
+  const item = itemId ? prices.items.find((i) => i.id === itemId) : undefined;
+  const itemInput = itemId ? (items[itemId] ?? (defaultInput(product, prices) as ItemInput)) : null;
   // Banner sizes as typed (may be half-typed or out of range); the input keeps the last valid value
   const [dims, setDims] = useState({ width: num(banners.width), height: num(banners.height) });
   const [comment, setComment] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [stage, setStage] = useState("Оформляем…");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const input: CalcInput = product === "cards" ? cards : banners;
+  const input: CalcInput = itemInput ?? (product === "banners" ? banners : cards);
   const q = useMemo(() => quote(input, prices), [input, prices]);
   const search = inputToSearch(input);
   const dimOk = (k: Dim) => {
@@ -69,9 +85,11 @@ export function Calculator({ slug, prices, initial, signedIn }: Props) {
     window.history.replaceState(null, "", `?${search}`);
   }, [search]);
 
-  const products = (Object.keys(PRODUCTS) as Product[]).filter((p) => prices[p].enabled);
+  const products = productList(prices);
   const setCard = (patch: Partial<CardsInput>) => setCards((c) => ({ ...c, ...patch }));
   const setBanner = (patch: Partial<BannersInput>) => setBanners((b) => ({ ...b, ...patch }));
+  const setItem = (patch: Partial<ItemInput>) =>
+    itemInput && setItems((m) => ({ ...m, [itemInput.item]: { ...(m[itemInput.item] ?? itemInput), ...patch } }));
 
   function typeDim(k: Dim, text: string) {
     setDims((d) => ({ ...d, [k]: text }));
@@ -85,12 +103,30 @@ export function Calculator({ slug, prices, initial, signedIn }: Props) {
     setBanner({ [k]: v });
   }
 
+  function pick(list: FileList) {
+    const picked = Array.from(list).filter((f) => {
+      const problem = fileProblem(f);
+      if (problem) toast.error(`${f.name}: ${problem}`);
+      return !problem;
+    });
+    if (files.length + picked.length > MAX_FILES) toast.error(`Не больше ${MAX_FILES} файлов, остальные прикрепите в заказе`);
+    setFiles((f) => [...f, ...picked].slice(0, MAX_FILES));
+  }
+
   function submit() {
     setError(null);
+    setStage("Оформляем…");
     startTransition(async () => {
       const res = await requestOrder(slug, { input, comment });
-      if (res?.login) router.push(loginHref);
-      else if (res?.error) setError(res.error);
+      if (res?.login) return router.push(loginHref);
+      if (!res?.orderId) return setError(res?.error ?? "Не удалось оформить заказ, попробуйте ещё раз");
+      // The order is placed; a layout that fails to upload can be attached again on the order screen
+      for (const [i, file] of files.entries()) {
+        setStage(files.length > 1 ? `Макет ${i + 1} из ${files.length}…` : "Загружаем макет…");
+        const problem = await uploadOrderFile(file, res.orderId, companyId);
+        if (problem) toast.error(`${file.name}: ${problem}. Прикрепите его в заказе`);
+      }
+      router.push(`/c/${slug}/orders/${res.orderId}`);
     });
   }
 
@@ -101,13 +137,49 @@ export function Calculator({ slug, prices, initial, signedIn }: Props) {
           label="Что печатаем"
           value={product}
           onChange={setProduct}
-          options={products.map((p) => ({ value: p, label: PRODUCTS[p] }))}
+          options={products.map((p) => ({ value: p.key, label: p.label }))}
           className="mb-2"
           plain
         />
       )}
 
-      {product === "cards" ? (
+      {item && itemInput ? (
+        <div className="flex flex-col gap-2">
+          <Group title="Тираж, шт.">
+            <Choice
+              label="Тираж"
+              value={itemInput.qty}
+              onChange={(qty) => setItem({ qty })}
+              options={item.tiers.map((t) => ({ value: t.qty, label: new Intl.NumberFormat("ru-RU").format(t.qty) }))}
+            />
+          </Group>
+          {item.options.map((o) => (
+            <Group key={o.id} title={o.name}>
+              <Choice
+                label={o.name}
+                value={itemInput.options[o.id]}
+                onChange={(c) => setItem({ options: { ...itemInput.options, [o.id]: c } })}
+                options={o.choices.map((c) => ({ value: c.id, label: c.name }))}
+              />
+            </Group>
+          ))}
+          {(item.extras.length > 0 || item.urgentPct > 0) && (
+            <Group>
+              {item.extras.map((e) => (
+                <Toggle
+                  key={e.id}
+                  label={e.name}
+                  checked={itemInput.extras.includes(e.id)}
+                  onChange={(on) => setItem({ extras: item.extras.filter((x) => (x.id === e.id ? on : itemInput.extras.includes(x.id))).map((x) => x.id) })}
+                />
+              ))}
+              {item.urgentPct > 0 && (
+                <Toggle label={`Срочно, +${item.urgentPct}%`} checked={itemInput.urgent} onChange={(urgent) => setItem({ urgent })} />
+              )}
+            </Group>
+          )}
+        </div>
+      ) : product === "cards" ? (
         <div className="flex flex-col gap-2">
           <Group title="Размер">
             <Choice
@@ -226,6 +298,51 @@ export function Calculator({ slug, prices, initial, signedIn }: Props) {
             rows={3}
             className="rounded-tile bg-card"
           />
+          <SectionTitle>Макет</SectionTitle>
+          <div className="rounded-card bg-card p-4">
+            {files.length > 0 && (
+              <ul className="mb-3 flex flex-col divide-y divide-border/70">
+                {files.map((f, i) => (
+                  <li key={`${i}-${f.name}`} className="flex items-center gap-3 py-2.5 first:pt-0">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-tile bg-muted">
+                      <FileIcon className="size-4.5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[15px] font-medium" title={f.name}>
+                        {f.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{formatSize(f.size)}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Убрать ${f.name}`}
+                      disabled={pending}
+                      onClick={() => setFiles((list) => list.filter((_, j) => j !== i))}
+                    >
+                      <X />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Button variant="outline" disabled={pending || files.length >= MAX_FILES} onClick={() => fileRef.current?.click()}>
+              <Paperclip data-icon="inline-start" /> Прикрепить макет
+            </Button>
+            <p className="mt-3 text-sm text-muted-foreground">PDF, AI, CDR, PSD, TIFF или архив, до 50 МБ. Можно прислать и позже — в карточке заказа</p>
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              accept={FILE_ACCEPT}
+              className="hidden"
+              aria-label="Файлы макета"
+              onChange={(e) => {
+                if (e.target.files?.length) pick(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
         </>
       )}
       {error && (
@@ -241,7 +358,7 @@ export function Calculator({ slug, prices, initial, signedIn }: Props) {
         </div>
         {signedIn ? (
           <Button size="lg" onClick={submit} disabled={pending || hasErrors}>
-            {pending ? "Оформляем…" : "Оформить заказ"}
+            {pending ? stage : "Оформить заказ"}
           </Button>
         ) : (
           <Button asChild size="lg">

@@ -49,7 +49,7 @@ export default async function ChatScreen({ params }: PageProps<"/c/[slug]/chat">
                 <MessageCircle />
               </EmptyMedia>
               <EmptyTitle>Напишите нам</EmptyTitle>
-              <EmptyDescription>Спросите о сроках, макете или доставке — менеджер ответит здесь.</EmptyDescription>
+              <EmptyDescription>Спросите о сроках, макете или доставке — менеджер ответит здесь. Файл макета прикрепите в карточке заказа.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         }

@@ -14,10 +14,10 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { requireClient } from "@/lib/auth";
 import { getBanners } from "@/lib/banners";
 import { getPriceList } from "@/lib/price-list";
-import { isEnabled } from "@/lib/pricing";
+import { isEnabled, productList } from "@/lib/pricing";
 import { formatDateShort, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { DELIVERY_LABELS, type Order } from "@/lib/types";
+import { DELIVERY_LABELS, STATUSES, companyStatuses, type Order } from "@/lib/types";
 
 export const metadata = { title: "Мои заказы" };
 
@@ -67,7 +67,7 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
     >
       <RealtimeRefresh table="orders" filter={`client_id=eq.${profile.id}`} />
       <InstallBanner />
-      {calculator && !!data?.length && <CalculatorCard slug={slug} />}
+      {calculator && !!data?.length && <CalculatorCard slug={slug} products={productList(prices.prices).map((p) => p.label)} />}
       {!archive && <BannerStrip banners={banners} className="mb-5" />}
 
       <nav aria-label="Фильтр заказов" className="mb-5 flex gap-2">
@@ -105,7 +105,7 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
             {ready.map((o) => (
               <ReadyCard key={o.id} slug={slug} order={o} />
             ))}
-            {featured && <FeaturedCard slug={slug} order={featured} />}
+            {featured && <FeaturedCard slug={slug} order={featured} statuses={companyStatuses(company)} />}
           </div>
           {!!rest.length && (
             <>
@@ -137,7 +137,7 @@ function FilterChip({ href, active, label, count }: { href: string; active: bool
 }
 
 // The order the client cares about most: dark hero card, like a photo card with text over it
-function FeaturedCard({ slug, order }: { slug: string; order: Order }) {
+function FeaturedCard({ slug, order, statuses }: { slug: string; order: Order; statuses: typeof STATUSES }) {
   const Delivery = order.delivery_method === "pickup" ? Store : Truck;
   return (
     <Link
@@ -156,7 +156,7 @@ function FeaturedCard({ slug, order }: { slug: string; order: Order }) {
         <p className="mt-1 text-2xl leading-tight font-semibold tracking-tight">{order.title}</p>
       </div>
       <div className="relative flex flex-col gap-4">
-        <OrderProgress status={order.status} tone="light" />
+        <OrderProgress status={order.status} statuses={statuses} tone="light" />
         <div className="flex flex-wrap gap-2">
           <GlassPill icon={CalendarDays}>{order.due_date ? `до ${formatDateShort(order.due_date)}` : "Срок уточняется"}</GlassPill>
           <GlassPill icon={Delivery}>{DELIVERY_LABELS[order.delivery_method]}</GlassPill>

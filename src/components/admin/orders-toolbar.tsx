@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STATUSES } from "@/lib/types";
+import { useStatuses } from "@/components/statuses";
 
 export function OrdersToolbar({ withStatus = true }: { withStatus?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const [q, setQ] = useState(params.get("q") ?? "");
+  const statuses = useStatuses();
 
   const update = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -42,7 +43,7 @@ export function OrdersToolbar({ withStatus = true }: { withStatus?: boolean }) {
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="active">В работе</SelectItem>
             <SelectItem value="overdue">Просроченные</SelectItem>
-            {STATUSES.map((s) => (
+            {statuses.map((s) => (
               <SelectItem key={s.value} value={s.value}>
                 {s.label}
               </SelectItem>

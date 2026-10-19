@@ -19,3 +19,10 @@ export function fileExtension(name: string) {
 }
 
 export const isAllowedFile = (name: string) => FILE_ACCEPT.split(",").includes(`.${fileExtension(name)}`);
+
+// Why a file cannot be uploaded, or null
+export function fileProblem(file: { name: string; size: number }) {
+  if (!isAllowedFile(file.name)) return "формат не поддерживается";
+  if (file.size > MAX_FILE_SIZE) return "больше 50 МБ";
+  return null;
+}

@@ -385,3 +385,46 @@ describe("RLS: banners and Telegram", () => {
     assert.equal(data?.[0]?.telegram, "print_shop");
   });
 });
+
+describe("RLS: MAX, the post-press stage, own items", () => {
+  test("MAX is a max.ru link, set by the owner", async () => {
+    const foreign = await ownerA.from("companies").update({ max_url: "https://evil.example/u/1" }).eq("id", ctx.A.companyId);
+    assert.notEqual(foreign.error, null, "a link to another site");
+    const { data } = await ownerA
+      .from("companies")
+      .update({ max_url: "https://max.ru/u/f9LHodD0cOJt34p_UbhR97c03cMEAAwB", max_phone: "+7 900 000-00-00" })
+      .eq("id", ctx.A.companyId)
+      .select("max_url, max_phone");
+    assert.equal(data?.[0]?.max_url, "https://max.ru/u/f9LHodD0cOJt34p_UbhR97c03cMEAAwB");
+  });
+
+  test("switching off «Постпечать» moves its orders to «Печать» and closes the stage", async () => {
+    const { data: order } = await admin
+      .from("orders")
+      .insert({ company_id: ctx.B.companyId, client_id: ctx.B.clientId, title: "Finishing", status: "finishing" })
+      .select("id")
+      .single();
+    const { data: byStaff } = await staffB.from("companies").update({ finishing_stage: false }).eq("id", ctx.B.companyId).select("id");
+    assert.equal(byStaff?.length ?? 0, 0, "staff switches the stage");
+    assert.equal((await admin.from("companies").update({ finishing_stage: false }).eq("id", ctx.B.companyId)).error, null);
+
+    const { data: moved } = await admin.from("orders").select("status").eq("id", order!.id).single();
+    assert.equal(moved?.status, "printing");
+    const back = await staffB.from("orders").update({ status: "finishing" }).eq("id", order!.id);
+    assert.notEqual(back.error, null, "an order enters a switched-off stage");
+    const created = await staffB.from("orders").insert({ company_id: ctx.B.companyId, client_id: ctx.B.clientId, title: "x", status: "finishing" });
+    assert.notEqual(created.error, null, "a new order starts in a switched-off stage");
+    const elsewhere = await staffA.from("orders").update({ status: "finishing" }).eq("id", ctx.A.orderId);
+    assert.equal(elsewhere.error, null, "the stage stays on in other companies");
+
+    await admin.from("companies").update({ finishing_stage: true }).eq("id", ctx.B.companyId);
+  });
+
+  test("a price list with own items fits; an oversized one is rejected", async () => {
+    const items = Array.from({ length: 30 }, (_, i) => ({ ...DEFAULT_PRICE_LIST.items[0], id: `item${i}`, name: `Позиция ${i}` }));
+    const { error } = await admin.from("price_lists").update({ config: { ...DEFAULT_PRICE_LIST, items } }).eq("company_id", ctx.B.companyId);
+    assert.equal(error, null);
+    const huge = await admin.from("price_lists").update({ config: { ...DEFAULT_PRICE_LIST, junk: "x".repeat(300_000) } }).eq("company_id", ctx.B.companyId);
+    assert.notEqual(huge.error, null);
+  });
+});

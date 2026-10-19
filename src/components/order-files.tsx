@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { FILE_ACCEPT, MAX_FILE_SIZE, fileExtension, isAllowedFile, uploadType } from "@/lib/files";
+import { FILE_ACCEPT, fileExtension, fileProblem, uploadType } from "@/lib/files";
 import { formatDateTime, formatSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,17 @@ type Props = {
   side: "client" | "staff";
 };
 
+// Browser → storage (policies check the order) → registerFile; returns the error to show, or null.
+// Check the file with fileProblem first.
+export async function uploadOrderFile(file: File, orderId: string, companyId: string) {
+  const supabase = createClient();
+  const path = `${companyId}/${orderId}/${crypto.randomUUID()}.${fileExtension(file.name)}`;
+  const type = uploadType(file.type);
+  const { error } = await supabase.storage.from("order-files").upload(path, file, { contentType: type });
+  if (error) return "Не удалось загрузить файл";
+  return (await registerFile({ orderId, path, name: file.name, size: file.size, mime: type })).error ?? null;
+}
+
 // Layouts from the client and proofs from the print shop; new files arrive via realtime → router.refresh()
 export function OrderFiles({ orderId, companyId, files, meId, side }: Props) {
   const router = useRouter();
@@ -46,23 +57,16 @@ export function OrderFiles({ orderId, companyId, files, meId, side }: Props) {
   const [uploading, setUploading] = useState<string[]>([]);
 
   async function upload(list: FileList) {
-    const supabase = createClient();
     for (const file of Array.from(list)) {
-      if (!isAllowedFile(file.name)) {
-        toast.error(`${file.name}: формат не поддерживается`);
-        continue;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error(`${file.name}: больше 50 МБ`);
+      const problem = fileProblem(file);
+      if (problem) {
+        toast.error(`${file.name}: ${problem}`);
         continue;
       }
       setUploading((u) => [...u, file.name]);
-      const path = `${companyId}/${orderId}/${crypto.randomUUID()}.${fileExtension(file.name)}`;
-      const type = uploadType(file.type);
-      const { error } = await supabase.storage.from("order-files").upload(path, file, { contentType: type });
-      const res = error ? { error: "Не удалось загрузить файл" } : await registerFile({ orderId, path, name: file.name, size: file.size, mime: type });
+      const error = await uploadOrderFile(file, orderId, companyId);
       setUploading((u) => u.filter((n) => n !== file.name));
-      if (res.error) toast.error(`${file.name}: ${res.error}`);
+      if (error) toast.error(`${file.name}: ${error}`);
       else toast.success(`${file.name} загружен`);
     }
     router.refresh();

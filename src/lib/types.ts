@@ -15,6 +15,9 @@ export type Company = {
   address: string | null;
   work_hours: string | null;
   telegram: string | null;
+  max_url: string | null;
+  max_phone: string | null;
+  finishing_stage: boolean;
   timezone: string;
 };
 
@@ -90,5 +93,9 @@ export const STATUSES: { value: OrderStatus; label: string; dot: string }[] = [
 ];
 
 export const statusMeta = (s: OrderStatus) => STATUSES.find((x) => x.value === s)!;
+
+// The stages a company uses: "Постпечать" can be switched off in the settings
+export const companyStatuses = (company: Pick<Company, "finishing_stage">) =>
+  STATUSES.filter((s) => s.value !== "finishing" || company.finishing_stage);
 
 export const DELIVERY_LABELS: Record<DeliveryMethod, string> = { pickup: "Самовывоз", delivery: "Доставка" };

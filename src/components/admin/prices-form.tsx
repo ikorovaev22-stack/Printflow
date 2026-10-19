@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useId, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { savePriceList } from "@/app/actions/calculator";
 import { QuoteLines } from "@/components/quote-lines";
@@ -14,6 +15,8 @@ import {
   CARD_PAPERS,
   CARD_QUANTITIES,
   CARD_SIZES,
+  ITEM_LIMITS,
+  defaultInput,
   parsePriceList,
   quote,
   type BannersInput,
@@ -34,10 +37,12 @@ type Path = (string | number)[];
 // The form edits a copy of the price list in which numbers may be half-typed text ("1,"); parsePriceList reads both
 type Draft = Record<string, unknown>;
 
-function setIn(obj: Draft, path: Path, value: unknown): Draft {
+function setIn(obj: Draft | unknown[], path: Path, value: unknown): Draft {
   const [head, ...rest] = path;
-  const child = (obj[head] ?? {}) as Draft;
-  return { ...obj, [head]: rest.length ? setIn(child, rest, value) : value };
+  const child = ((obj as Draft)[head] ?? {}) as Draft;
+  const next = rest.length ? setIn(child, rest, value) : value;
+  if (Array.isArray(obj)) return Object.assign([...obj], { [head]: next }) as unknown as Draft;
+  return { ...obj, [head]: next };
 }
 function getIn(obj: Draft, path: Path): unknown {
   return path.reduce<unknown>((o, k) => (o as Draft | undefined)?.[k], obj);
@@ -57,6 +62,8 @@ export function PricesForm({ initial, isNew }: { initial: PriceList; isNew: bool
     value: getIn(draft, path),
     onChange: (v: unknown) => setDraft((d) => setIn(d, path, v)),
   });
+  const update: Update = (path, fn) => setDraft((d) => setIn(d, path, fn(getIn(d, path))));
+  const items = rows(draft.items);
 
   return (
     <div className="grid items-start gap-6 xl:grid-cols-[1fr_380px]">
@@ -126,6 +133,26 @@ export function PricesForm({ initial, isNew }: { initial: PriceList; isNew: bool
           </Block>
         </Section>
 
+        <div className="pt-4">
+          <h2 className="text-lg font-semibold">Свои позиции</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Листовки, сертификаты, бирки — всё, что считается по тиражу. У клиентов позиция появится в калькуляторе рядом с визитками и баннерами.
+          </p>
+        </div>
+        {items.map((item, i) => (
+          <ItemSection key={String(item.id)} index={i} count={items.length} item={item} field={field} update={update} />
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="self-start"
+          disabled={items.length >= ITEM_LIMITS.items}
+          onClick={() => update(["items"], (v) => [...rows(v), blankItem()])}
+        >
+          <Plus data-icon="inline-start" /> Добавить позицию
+        </Button>
+
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={pending || !parsed.ok}>
             {pending ? "Сохранение…" : "Сохранить цены"}
@@ -144,10 +171,14 @@ export function PricesForm({ initial, isNew }: { initial: PriceList; isNew: bool
           <p className="mt-1 mb-5 text-sm text-muted-foreground">Так клиент увидит цену в калькуляторе</p>
           {parsed.ok ? (
             <div className="flex flex-col gap-6">
-              {[CARD_SAMPLE, BANNER_SAMPLE].map((sample) => {
+              {[
+                CARD_SAMPLE,
+                BANNER_SAMPLE,
+                ...parsed.value.items.filter((i) => i.enabled).map((i) => defaultInput(`item:${i.id}`, parsed.value)),
+              ].map((sample) => {
                 const q = quote(sample, parsed.value);
                 return (
-                  <div key={sample.product}>
+                  <div key={sample.product === "item" ? `item:${sample.item}` : sample.product}>
                     <p className="mb-3 font-medium">{q.title}</p>
                     <QuoteLines lines={q.lines} total={q.total} className="text-sm" />
                   </div>
@@ -175,6 +206,165 @@ export function PricesForm({ initial, isNew }: { initial: PriceList; isNew: bool
 }
 
 type Bound = { value: unknown; onChange: (v: unknown) => void };
+type Update = (path: Path, fn: (value: unknown) => unknown) => void;
+
+const rows = (v: unknown) => (Array.isArray(v) ? v : []) as Draft[];
+// Ids keep the calculator's links and saved requests stable while names change (pricing.ts: [a-z0-9]{1,16})
+const newId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+const blankChoice = () => ({ id: newId(), name: "", coef: 1 });
+const blankItem = () => ({ id: newId(), name: "", enabled: true, tiers: [{ qty: 100, price: "" }], options: [], extras: [], urgentPct: 0 });
+
+// One own item: runs with prices, options with variants, extras, urgency
+function ItemSection({ index, count, item, field, update }: { index: number; count: number; item: Draft; field: (path: Path) => Bound; update: Update }) {
+  const id = useId();
+  const base: Path = ["items", index];
+  const name = String(item.name ?? "");
+  const on = item.enabled !== false;
+  const tiers = rows(item.tiers);
+  const options = rows(item.options);
+  const extras = rows(item.extras);
+  const L = ITEM_LIMITS;
+  const add = (path: Path, row: Draft) => update(path, (v) => [...rows(v), row]);
+  const remove = (path: Path, i: number) => update(path, (v) => rows(v).filter((_, j) => j !== i));
+  const move = (dir: -1 | 1) =>
+    update(["items"], (v) => {
+      const list = [...rows(v)];
+      [list[index], list[index + dir]] = [list[index + dir], list[index]];
+      return list;
+    });
+
+  return (
+    <section aria-label={name || "Новая позиция"} className="flex flex-col gap-6 rounded-card bg-card p-6 md:p-8">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <Input
+          aria-label="Название позиции"
+          placeholder="Название, например «Листовки А5»"
+          value={name}
+          onChange={(e) => field([...base, "name"]).onChange(e.target.value)}
+          maxLength={L.name}
+          className="h-11 min-w-56 flex-1 text-lg font-semibold"
+        />
+        <div className="flex items-center gap-3">
+          <Label htmlFor={id} className="font-normal text-muted-foreground">
+            {on ? "Показываем клиентам" : "Скрыто от клиентов"}
+          </Label>
+          <Switch id={id} checked={on} onCheckedChange={(v) => field([...base, "enabled"]).onChange(v)} />
+        </div>
+        <div className="flex">
+          <Button type="button" variant="ghost" size="icon" aria-label="Переместить выше" disabled={index === 0} onClick={() => move(-1)}>
+            <ArrowUp />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" aria-label="Переместить ниже" disabled={index === count - 1} onClick={() => move(1)}>
+            <ArrowDown />
+          </Button>
+          <RemoveButton label={`Удалить позицию${name ? ` «${name}»` : ""}`} onClick={() => remove(["items"], index)} />
+        </div>
+      </div>
+
+      <div className={cn("flex flex-col gap-6", !on && "opacity-50")}>
+        <Block title="Тиражи" hint="Цена всего тиража, когда в каждом параметре выбран вариант с коэффициентом 1. Клиент выбирает один из этих тиражей.">
+          {tiers.map((_, t) => (
+            <Row key={t} cols="grid-cols-2 sm:grid-cols-[10rem_12rem]" onRemove={tiers.length > 1 ? () => remove([...base, "tiers"], t) : undefined} what="тираж">
+              <NumberField label="Тираж" hideLabel={t > 0} suffix="шт." {...field([...base, "tiers", t, "qty"])} />
+              <NumberField label="Цена тиража" hideLabel={t > 0} suffix="₽" {...field([...base, "tiers", t, "price"])} />
+            </Row>
+          ))}
+          <AddButton disabled={tiers.length >= L.tiers} onClick={() => add([...base, "tiers"], { qty: "", price: "" })}>
+            Добавить тираж
+          </AddButton>
+        </Block>
+
+        <Block
+          title="Параметры"
+          hint="Клиент выбирает один вариант в каждом параметре — например, бумагу или цветность. Коэффициент умножает цену тиража; первый вариант выбран по умолчанию."
+        >
+          {options.map((o, k) => {
+            const op: Path = [...base, "options", k];
+            const choices = rows(o.choices);
+            return (
+              <div key={String(o.id)} className="flex flex-col gap-3 rounded-tile border p-4">
+                <div className="flex items-center gap-2">
+                  <TextField label="Название параметра" hideLabel placeholder="Параметр, например «Бумага»" maxLength={40} {...field([...op, "name"])} />
+                  <RemoveButton label="Удалить параметр" onClick={() => remove([...base, "options"], k)} />
+                </div>
+                {choices.map((c, j) => (
+                  <Row key={String(c.id)} cols="sm:grid-cols-[1fr_10rem]" onRemove={choices.length > 1 ? () => remove([...op, "choices"], j) : undefined} what="вариант">
+                    <TextField label="Вариант" hideLabel={j > 0} placeholder="Мелованная 130 г/м²" maxLength={L.name} {...field([...op, "choices", j, "name"])} />
+                    <NumberField label="Коэффициент" hideLabel={j > 0} suffix="×" {...field([...op, "choices", j, "coef"])} />
+                  </Row>
+                ))}
+                <AddButton disabled={choices.length >= L.choices} onClick={() => add([...op, "choices"], blankChoice())}>
+                  Добавить вариант
+                </AddButton>
+              </div>
+            );
+          })}
+          <AddButton
+            disabled={options.length >= L.options}
+            onClick={() => add([...base, "options"], { id: newId(), name: "", choices: [blankChoice(), blankChoice()] })}
+          >
+            Добавить параметр
+          </AddButton>
+        </Block>
+
+        <Block title="Доп. услуги" hint="Клиент включает их переключателем. Цена за штуку, но не меньше минимума за заказ; фиксированная цена — 0 за штуку и сумма в минимуме.">
+          {extras.map((e, j) => (
+            <Row key={String(e.id)} cols="sm:grid-cols-[1fr_9rem_9rem]" onRemove={() => remove([...base, "extras"], j)} what="услугу">
+              <TextField label="Услуга" hideLabel={j > 0} placeholder="Скругление углов" maxLength={L.name} {...field([...base, "extras", j, "name"])} />
+              <NumberField label="За штуку" hideLabel={j > 0} suffix="₽" {...field([...base, "extras", j, "perPiece"])} />
+              <NumberField label="Минимум за заказ" hideLabel={j > 0} suffix="₽" {...field([...base, "extras", j, "min"])} />
+            </Row>
+          ))}
+          <AddButton disabled={extras.length >= L.extras} onClick={() => add([...base, "extras"], { id: newId(), name: "", perPiece: 0, min: 0 })}>
+            Добавить услугу
+          </AddButton>
+        </Block>
+
+        <div className="w-full sm:w-56">
+          <NumberField label="Наценка за срочность" suffix="%" {...field([...base, "urgentPct"])} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Fields side by side with a remove button at the end; the first row carries the labels
+function Row({ cols, onRemove, what, children }: { cols: string; onRemove?: () => void; what: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-end gap-2">
+      <div className={cn("grid min-w-0 flex-1 gap-3", cols)}>{children}</div>
+      {onRemove ? <RemoveButton label={`Удалить ${what}`} onClick={onRemove} /> : <span aria-hidden className="size-9 shrink-0" />}
+    </div>
+  );
+}
+
+function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Button type="button" variant="ghost" size="icon" aria-label={label} onClick={onClick} className="shrink-0 text-muted-foreground hover:text-destructive">
+      <Trash2 />
+    </Button>
+  );
+}
+
+function AddButton({ disabled, onClick, children }: { disabled?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <Button type="button" variant="ghost" size="sm" className="self-start" disabled={disabled} onClick={onClick}>
+      <Plus data-icon="inline-start" /> {children}
+    </Button>
+  );
+}
+
+function TextField({ label, hideLabel, placeholder, maxLength, value, onChange }: { label: string; hideLabel?: boolean; placeholder?: string; maxLength?: number } & Bound) {
+  const id = useId();
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <Label htmlFor={id} className={cn("text-sm font-normal text-muted-foreground", hideLabel && "sr-only")}>
+        {label}
+      </Label>
+      <Input id={id} value={String(value ?? "")} placeholder={placeholder} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
 
 function Section({ title, toggle, children }: { title: string; toggle: Bound; children: React.ReactNode }) {
   const id = useId();

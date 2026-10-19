@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Calculator, ChevronRight } from "lucide-react";
 
-// Entry to the calculator from the orders screen: a secondary card, the tab bar stays with four sections
-export function CalculatorCard({ slug }: { slug: string }) {
+// Entry to the calculator from the orders screen: a secondary card, the tab bar stays with four sections.
+// products: what the calculator offers, in its order
+export function CalculatorCard({ slug, products }: { slug: string; products: string[] }) {
+  const named = products.slice(0, 3).map((p, i) => (i ? p[0].toLowerCase() + p.slice(1) : p));
+  const hint = `${named.join(", ")}${products.length > 3 ? " и другое" : ""} — цена сразу`;
   return (
     <Link
       href={`/c/${slug}/calculator`}
@@ -13,7 +16,7 @@ export function CalculatorCard({ slug }: { slug: string }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block font-semibold">Рассчитать стоимость</span>
-        <span className="block text-sm text-muted-foreground">Визитки и баннеры — цена сразу</span>
+        <span className="block truncate text-sm text-muted-foreground">{hint}</span>
       </span>
       <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
     </Link>

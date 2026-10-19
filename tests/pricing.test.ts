@@ -11,6 +11,7 @@ import {
   quote,
   type BannersInput,
   type CardsInput,
+  type ItemInput,
   type PriceList,
 } from "../src/lib/pricing";
 
@@ -22,7 +23,11 @@ const cards = (o: Partial<CardsInput> = {}): CardsInput => ({
 const banner = (o: Partial<BannersInput> = {}): BannersInput => ({
   product: "banners", width: 3, height: 1, material: "frontlit440", grommets: null, hem: false, pockets: "none", urgent: false, ...o,
 });
+const item = (o: Partial<ItemInput> = {}): ItemInput => ({
+  product: "item", item: "flyers", qty: 500, options: { paper: "c130", sides: "s40" }, extras: [], urgent: false, ...o,
+});
 const amounts = (q: ReturnType<typeof quote>) => q.lines.map((l) => l.amount);
+const error = (r: ReturnType<typeof parsePriceList>) => (r.ok ? "" : r.error);
 
 describe("business cards", () => {
   test("run tiers: the total follows the tier price, the price per card falls as the run grows", () => {
@@ -168,5 +173,76 @@ describe("price list validation", () => {
     range.banners.width = { min: 4, max: 2 };
     assert.equal(parsePriceList(range).ok, false);
     assert.equal(parsePriceList("nonsense").ok, false);
+  });
+});
+
+describe("own items", () => {
+  test("the run price times the chosen variants, extras with a minimum charge, urgency on top", () => {
+    assert.deepEqual(amounts(quote(item(), P)), [3200]);
+    const q = quote(item({ qty: 1000, options: { paper: "c170", sides: "s44" }, urgent: true }), P);
+    assert.deepEqual(amounts(q), [7245, 3623]); // 4500 × 1,15 × 1,4; 50% of it
+    assert.match(q.title, /^Листовки А5, 1\s000 шт\.$/);
+    assert.match(q.lines[0].label, /^1\s000 шт\., Мелованная 170 г\/м², Двусторонняя \(4\+4\)$/);
+
+    const p = clone();
+    p.items[0].extras.push({ id: "crease", name: "Биговка", perPiece: 0.5, min: 300 });
+    assert.deepEqual(amounts(quote(item({ qty: 100, extras: ["crease"] }), p)), [1500, 300]);
+    assert.deepEqual(amounts(quote(item({ qty: 5000, extras: ["crease"] }), p)), [12000, 2500]);
+  });
+
+  test("input: the run, every option and the extras must exist; hidden items are rejected", () => {
+    assert.deepEqual(normalizeInput(item(), P), item());
+    for (const bad of [
+      item({ qty: 300 }),
+      item({ item: "cards" }),
+      item({ options: { paper: "c130" } }),
+      item({ options: { paper: "gold", sides: "s40" } }),
+      item({ extras: ["gloss"] }),
+    ]) {
+      assert.equal(normalizeInput(bad, P), null, JSON.stringify(bad));
+    }
+    const p = clone();
+    p.items[0].enabled = false;
+    assert.equal(normalizeInput(item(), p), null);
+    assert.equal(inputFromSearch({ p: "item", id: "flyers" }, p).product, "cards");
+  });
+
+  test("the query string round-trips; a missing variant falls back to the first one", () => {
+    const p = clone();
+    p.items[0].extras.push({ id: "crease", name: "Биговка", perPiece: 0.5, min: 300 });
+    const input = item({ qty: 5000, options: { paper: "c170", sides: "s44" }, extras: ["crease"], urgent: true });
+    const search = Object.fromEntries(new URLSearchParams(inputToSearch(input)));
+    assert.deepEqual(inputFromSearch(search, p), input);
+    assert.deepEqual(inputFromSearch({ p: "item", id: "flyers", qty: "1000", "o.sides": "s44" }, p), item({ qty: 1000, options: { paper: "c130", sides: "s44" } }));
+  });
+
+  test("runs are sorted; repeated runs, options without variants and broken ids are rejected", () => {
+    const sorted = clone();
+    sorted.items[0].tiers.reverse();
+    const r = parsePriceList(sorted);
+    assert.ok(r.ok);
+    assert.deepEqual(r.ok && r.value.items[0].tiers.map((t) => t.qty), [100, 500, 1000, 5000]);
+
+    const repeated = clone();
+    repeated.items[0].tiers[1].qty = 100;
+    assert.match(error(parsePriceList(repeated)), /тиражи повторяются/);
+
+    const noRuns = clone();
+    noRuns.items[0].tiers = [];
+    assert.match(error(parsePriceList(noRuns)), /хотя бы один тираж/);
+
+    const noChoices = clone();
+    noChoices.items[0].options[0].choices = [];
+    assert.match(error(parsePriceList(noChoices)), /Бумага: добавьте хотя бы один вариант/);
+
+    const nameless = clone();
+    nameless.items[0].name = " ";
+    assert.match(error(parsePriceList(nameless)), /Позиция 1: название/);
+
+    const twins = clone();
+    twins.items.push(structuredClone(twins.items[0]));
+    assert.match(error(parsePriceList(twins)), /данные повреждены/);
+
+    assert.deepEqual((parsePriceList({ ...clone(), items: undefined }) as { value: PriceList }).value.items, []);
   });
 });

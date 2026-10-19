@@ -63,6 +63,11 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
   // "@name", "t.me/name" and "https://t.me/name" all become "name"
   const telegram = opt(fd, "telegram")?.replace(/^(https?:\/\/)?(t\.me|telegram\.me)\//i, "").replace(/^@/, "") || null;
   if (telegram && !/^[A-Za-z0-9_]{5,32}$/.test(telegram)) return { error: "Telegram: имя из латиницы, цифр и _, от 5 до 32 символов" };
+  // "max.ru/u/…" and "http(s)://max.ru/u/…" become "https://max.ru/u/…"
+  const maxUrl = opt(fd, "max_url")?.replace(/^(https?:\/\/)?(www\.)?max\.ru\//i, "https://max.ru/") ?? null;
+  if (maxUrl && (maxUrl.length > 300 || !/^https:\/\/max\.ru\/[A-Za-z0-9_@./?=&%-]+$/.test(maxUrl))) {
+    return { error: "MAX: вставьте ссылку на профиль вида https://max.ru/u/…" };
+  }
 
   const { error } = await supabase
     .from("companies")
@@ -75,6 +80,9 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
       address: opt(fd, "address"),
       work_hours: opt(fd, "work_hours"),
       telegram,
+      max_url: maxUrl,
+      max_phone: opt(fd, "max_phone"),
+      finishing_stage: fd.get("finishing_stage") === "on",
       timezone,
     })
     .eq("id", company.id);

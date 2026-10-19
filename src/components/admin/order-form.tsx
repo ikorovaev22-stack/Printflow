@@ -7,13 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { STATUSES, type Order, type Profile } from "@/lib/types";
+import { useStatuses } from "@/components/statuses";
+import type { Order, Profile } from "@/lib/types";
 
 type Props = { order?: Order; clients: Pick<Profile, "id" | "full_name" | "email">[]; clientId?: string; back: string };
 
 export function OrderForm({ order, clients, clientId, back }: Props) {
   const [state, action, pending] = useActionState(saveOrder, undefined);
   const [delivery, setDelivery] = useState(order?.delivery_method ?? "pickup");
+  const statuses = useStatuses();
 
   return (
     <form action={action} className="grid gap-5 rounded-card bg-card p-6 md:grid-cols-2">
@@ -45,7 +47,7 @@ export function OrderForm({ order, clients, clientId, back }: Props) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {STATUSES.map((s) => (
+            {statuses.map((s) => (
               <SelectItem key={s.value} value={s.value}>
                 {s.label}
               </SelectItem>

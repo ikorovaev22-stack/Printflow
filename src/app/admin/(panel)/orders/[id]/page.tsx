@@ -8,7 +8,7 @@ import { QuoteLines } from "@/components/quote-lines";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { requireStaff } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import type { Order, OrderEvent, OrderFile } from "@/lib/types";
+import { companyStatuses, type Order, type OrderEvent, type OrderFile } from "@/lib/types";
 
 export default async function EditOrderPage({ params }: PageProps<"/admin/orders/[id]">) {
   const { id } = await params;
@@ -44,7 +44,7 @@ export default async function EditOrderPage({ params }: PageProps<"/admin/orders
           </section>
           <section className="rounded-card bg-card p-6">
             <h2 className="mb-4 font-semibold">История этапов</h2>
-            <OrderTimeline status={order.status} events={events ?? []} timeZone={company.timezone} />
+            <OrderTimeline status={order.status} statuses={companyStatuses(company)} events={events ?? []} timeZone={company.timezone} />
           </section>
         </aside>
       </div>

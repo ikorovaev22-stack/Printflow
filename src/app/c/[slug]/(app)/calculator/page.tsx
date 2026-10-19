@@ -15,5 +15,5 @@ export default async function CalculatorScreen({ params, searchParams }: PagePro
   if (!list || !isEnabled(list.prices)) notFound();
   const session = await getSession();
   const signedIn = session?.company.id === company.id && session.profile.role === "client";
-  return <Calculator slug={slug} prices={list.prices} initial={inputFromSearch(await searchParams, list.prices)} signedIn={signedIn} />;
+  return <Calculator slug={slug} companyId={company.id} prices={list.prices} initial={inputFromSearch(await searchParams, list.prices)} signedIn={signedIn} />;
 }

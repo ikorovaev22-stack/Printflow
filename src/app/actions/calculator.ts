@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { getCompanyBySlug, getSession, requireStaff } from "@/lib/auth";
 import { notifyOrderRequest } from "@/lib/notify";
@@ -12,10 +11,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { FormState } from "@/app/actions/auth";
 import type { OrderCalc } from "@/lib/types";
 
-export type RequestState = { error?: string; login?: boolean } | undefined;
+export type RequestState = { error?: string; login?: boolean; orderId?: string } | undefined;
 
 // Client request from the calculator. Only the options and a comment come from the browser: the price is
 // recalculated here from the company's price list, and the client is taken from the session.
+// Returns the new order: the browser uploads the attached layouts into it and opens it.
 export async function requestOrder(slug: string, payload: { input: unknown; comment?: unknown }): Promise<RequestState> {
   const company = await getCompanyBySlug(slug);
   if (!company) return { error: "Типография не найдена" };
@@ -57,7 +57,7 @@ export async function requestOrder(slug: string, payload: { input: unknown; comm
   after(() => notifyOrderRequest(data.id));
   revalidatePath(`/c/${slug}`, "layout");
   revalidatePath("/admin", "layout");
-  redirect(`/c/${slug}/orders/${data.id}`);
+  return { orderId: data.id };
 }
 
 // Owner saves the price list; the same validation runs on every read

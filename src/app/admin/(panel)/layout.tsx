@@ -1,10 +1,12 @@
 import { AppSidebar } from "@/components/admin/app-sidebar";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { StatusesProvider } from "@/components/statuses";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TimeZoneProvider } from "@/components/time-zone";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireStaff } from "@/lib/auth";
 import { brandStyle } from "@/lib/brand";
+import { companyStatuses } from "@/lib/types";
 
 export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
   const { profile, company, supabase } = await requireStaff();
@@ -23,7 +25,9 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
             <SidebarTrigger />
           </header>
           <div className="mx-auto w-full max-w-6xl p-4 md:p-10">
-            <TimeZoneProvider value={company.timezone}>{children}</TimeZoneProvider>
+            <TimeZoneProvider value={company.timezone}>
+              <StatusesProvider value={companyStatuses(company)}>{children}</StatusesProvider>
+            </TimeZoneProvider>
           </div>
         </SidebarInset>
       </SidebarProvider>

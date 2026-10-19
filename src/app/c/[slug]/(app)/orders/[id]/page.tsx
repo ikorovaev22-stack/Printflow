@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { requireClient } from "@/lib/auth";
 import { formatDate, formatRub } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { DELIVERY_LABELS, type Order, type OrderEvent, type OrderFile } from "@/lib/types";
+import { DELIVERY_LABELS, companyStatuses, type Order, type OrderEvent, type OrderFile } from "@/lib/types";
 
 export default async function OrderScreen({ params }: PageProps<"/c/[slug]/orders/[id]">) {
   const { slug, id } = await params;
@@ -26,6 +26,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
   ]);
   if (!order) notFound();
   const tz = company.timezone;
+  const statuses = companyStatuses(company);
   const pickup = order.delivery_method === "pickup";
   const ready = order.status === "ready";
   const delivered = order.status === "delivered";
@@ -51,7 +52,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
           )}
         </div>
         <div className="relative flex flex-col gap-4">
-          <OrderProgress status={order.status} tone={ready ? "ink" : "light"} />
+          <OrderProgress status={order.status} statuses={statuses} tone={ready ? "ink" : "light"} />
           {!ready && (
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={order.status} tone="glass" />
@@ -86,7 +87,7 @@ export default async function OrderScreen({ params }: PageProps<"/c/[slug]/order
 
       <SectionTitle>Этапы</SectionTitle>
       <div className="rounded-card bg-card p-5">
-        <OrderTimeline status={order.status} events={events ?? []} timeZone={tz} />
+        <OrderTimeline status={order.status} statuses={statuses} events={events ?? []} timeZone={tz} />
       </div>
 
       <SectionTitle>Файлы</SectionTitle>

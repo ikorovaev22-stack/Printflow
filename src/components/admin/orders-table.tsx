@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { Package, Paperclip } from "lucide-react";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { DueDatePicker, StatusSelect } from "@/components/admin/order-quick-edit";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatRub } from "@/lib/format";
 import { DELIVERY_LABELS, type Order } from "@/lib/types";
 
-export type OrderRow = Order & { client: { id: string; full_name: string; email: string | null } | null };
+export type OrderRow = Order & {
+  client?: { id: string; full_name: string; email: string | null } | null;
+  // Embedded count: order_files(count)
+  files?: { count: number }[];
+};
 
 export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[]; showClient?: boolean }) {
   if (!orders.length) {
@@ -45,6 +49,16 @@ export function OrdersTable({ orders, showClient = true }: { orders: OrderRow[];
                 </Link>
                 {o.source === "calculator" && (
                   <span className="ml-2 inline-flex h-6 items-center rounded-full bg-muted px-2.5 align-middle text-xs font-medium">Заявка</span>
+                )}
+                {!!o.files?.[0]?.count && (
+                  <span
+                    className="ml-2 inline-flex h-6 items-center gap-1 align-middle text-xs text-muted-foreground tabular-nums"
+                    aria-label={`Файлов: ${o.files[0].count}`}
+                    title="Файлы в заказе"
+                  >
+                    <Paperclip aria-hidden className="size-3.5" />
+                    {o.files[0].count}
+                  </span>
                 )}
               </TableCell>
               {showClient && (

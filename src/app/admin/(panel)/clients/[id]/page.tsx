@@ -14,7 +14,7 @@ export default async function ClientPage({ params }: PageProps<"/admin/clients/[
   const { supabase, company, profile } = await requireStaff();
   const [{ data: client }, { data: orders }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).eq("role", "client").maybeSingle<Profile>(),
-    supabase.from("orders").select("*").eq("client_id", id).order("created_at", { ascending: false }).returns<OrderRow[]>(),
+    supabase.from("orders").select("*, files:order_files(count)").eq("client_id", id).order("created_at", { ascending: false }).returns<OrderRow[]>(),
   ]);
   if (!client) notFound();
 
