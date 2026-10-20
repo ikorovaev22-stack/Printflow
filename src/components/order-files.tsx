@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { Download, File, FileArchive, FileImage, FileText, Loader2, Paperclip, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Download, File, FileArchive, FileImage, FileSpreadsheet, FileText, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteFile, fileUrl, registerFile } from "@/app/actions/files";
+import { FilePicker, useFileDrop } from "@/components/file-picker";
 import { useTimeZone } from "@/components/time-zone";
 import {
   AlertDialog,
@@ -18,15 +19,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { FILE_ACCEPT, fileExtension, fileProblem, uploadType } from "@/lib/files";
+import { fileExtension, fileProblem, uploadType } from "@/lib/files";
 import { formatDateTime, formatSize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { OrderFile } from "@/lib/types";
 
 const ICONS: Record<string, React.ElementType> = {
-  pdf: FileText,
-  png: FileImage, jpg: FileImage, jpeg: FileImage, webp: FileImage, tif: FileImage, tiff: FileImage, heic: FileImage, psd: FileImage,
+  pdf: FileText, doc: FileText, docx: FileText, odt: FileText, rtf: FileText, txt: FileText,
+  xls: FileSpreadsheet, xlsx: FileSpreadsheet,
+  png: FileImage, jpg: FileImage, jpeg: FileImage, webp: FileImage, gif: FileImage, bmp: FileImage, tif: FileImage, tiff: FileImage,
+  heic: FileImage, heif: FileImage, svg: FileImage, psd: FileImage,
   zip: FileArchive, rar: FileArchive, "7z": FileArchive,
 };
 
@@ -53,11 +56,11 @@ export async function uploadOrderFile(file: File, orderId: string, companyId: st
 export function OrderFiles({ orderId, companyId, files, meId, side }: Props) {
   const router = useRouter();
   const timeZone = useTimeZone();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<string[]>([]);
+  const drop = useFileDrop(upload, uploading.length > 0);
 
-  async function upload(list: FileList) {
-    for (const file of Array.from(list)) {
+  async function upload(list: File[]) {
+    for (const file of list) {
       const problem = fileProblem(file);
       if (problem) {
         toast.error(`${file.name}: ${problem}`);
@@ -88,7 +91,7 @@ export function OrderFiles({ orderId, companyId, files, meId, side }: Props) {
     f.uploaded_by === meId ? "Вы" : f.from_client ? "Клиент" : side === "client" ? "Типография" : "Сотрудник";
 
   return (
-    <div className="flex flex-col gap-3">
+    <div {...drop.props} className={cn("flex flex-col gap-3 rounded-tile", drop.over && "outline-2 outline-offset-8 outline-primary outline-dashed")}>
       {files.length > 0 || uploading.length > 0 ? (
         <ul className="flex flex-col divide-y divide-border/70">
           {files.map((f) => {
@@ -145,22 +148,17 @@ export function OrderFiles({ orderId, companyId, files, meId, side }: Props) {
         </ul>
       ) : (
         <p className="text-sm text-muted-foreground">
-          {side === "client" ? "Пришлите макет: PDF, AI, CDR, PSD, TIFF или архив, до 50 МБ" : "Файлов пока нет. Пришлите клиенту пробник на согласование"}
+          {side === "client"
+            ? "Пришлите макет или фото: PDF, AI, CDR, PSD, JPG, Word или архив, до 50 МБ"
+            : "Файлов пока нет. Пришлите клиенту пробник на согласование"}
         </p>
       )}
-      <Button variant="outline" className="self-start" disabled={uploading.length > 0} onClick={() => inputRef.current?.click()}>
-        <Paperclip data-icon="inline-start" /> {side === "client" ? "Прикрепить макет" : "Добавить файл"}
-      </Button>
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        accept={FILE_ACCEPT}
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files?.length) upload(e.target.files);
-          e.target.value = "";
-        }}
+      <FilePicker
+        label={side === "client" ? "Прикрепить макет" : "Добавить файл"}
+        inputLabel="Файлы заказа"
+        className="self-start"
+        disabled={uploading.length > 0}
+        onPick={upload}
       />
     </div>
   );

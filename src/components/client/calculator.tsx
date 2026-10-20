@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { File as FileIcon, Minus, Paperclip, Plus, X } from "lucide-react";
+import { File as FileIcon, Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { requestOrder } from "@/app/actions/calculator";
 import { Halftone } from "@/components/client/halftone";
 import { Screen, SectionTitle } from "@/components/client/screen";
 import { FloatingBar } from "@/components/client/tab-bar";
+import { FilePicker, useFileDrop } from "@/components/file-picker";
 import { uploadOrderFile } from "@/components/order-files";
 import { QuoteLines } from "@/components/quote-lines";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -17,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { FILE_ACCEPT, fileProblem } from "@/lib/files";
+import { fileProblem } from "@/lib/files";
 import { formatRub, formatSize } from "@/lib/format";
 import {
   BANNER_MATERIALS,
@@ -65,7 +66,6 @@ export function Calculator({ slug, companyId, prices, initial, signedIn }: Props
   const [dims, setDims] = useState({ width: num(banners.width), height: num(banners.height) });
   const [comment, setComment] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState("Оформляем…");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -103,8 +103,8 @@ export function Calculator({ slug, companyId, prices, initial, signedIn }: Props
     setBanner({ [k]: v });
   }
 
-  function pick(list: FileList) {
-    const picked = Array.from(list).filter((f) => {
+  function pick(list: File[]) {
+    const picked = list.filter((f) => {
       const problem = fileProblem(f);
       if (problem) toast.error(`${f.name}: ${problem}`);
       return !problem;
@@ -112,6 +112,7 @@ export function Calculator({ slug, companyId, prices, initial, signedIn }: Props
     if (files.length + picked.length > MAX_FILES) toast.error(`Не больше ${MAX_FILES} файлов, остальные прикрепите в заказе`);
     setFiles((f) => [...f, ...picked].slice(0, MAX_FILES));
   }
+  const drop = useFileDrop(pick, pending || files.length >= MAX_FILES);
 
   function submit() {
     setError(null);
@@ -299,7 +300,7 @@ export function Calculator({ slug, companyId, prices, initial, signedIn }: Props
             className="rounded-tile bg-card"
           />
           <SectionTitle>Макет</SectionTitle>
-          <div className="rounded-card bg-card p-4">
+          <div {...drop.props} className={cn("rounded-card bg-card p-4", drop.over && "outline-2 -outline-offset-2 outline-primary outline-dashed")}>
             {files.length > 0 && (
               <ul className="mb-3 flex flex-col divide-y divide-border/70">
                 {files.map((f, i) => (
@@ -326,22 +327,10 @@ export function Calculator({ slug, companyId, prices, initial, signedIn }: Props
                 ))}
               </ul>
             )}
-            <Button variant="outline" disabled={pending || files.length >= MAX_FILES} onClick={() => fileRef.current?.click()}>
-              <Paperclip data-icon="inline-start" /> Прикрепить макет
-            </Button>
-            <p className="mt-3 text-sm text-muted-foreground">PDF, AI, CDR, PSD, TIFF или архив, до 50 МБ. Можно прислать и позже — в карточке заказа</p>
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              accept={FILE_ACCEPT}
-              className="hidden"
-              aria-label="Файлы макета"
-              onChange={(e) => {
-                if (e.target.files?.length) pick(e.target.files);
-                e.target.value = "";
-              }}
-            />
+            <FilePicker label="Прикрепить макет" inputLabel="Файлы макета" disabled={pending || files.length >= MAX_FILES} onPick={pick} />
+            <p className="mt-3 text-sm text-muted-foreground">
+              Макет или фото: PDF, AI, CDR, PSD, JPG, Word или архив, до 50 МБ. Можно прислать и позже — в карточке заказа
+            </p>
           </div>
         </>
       )}
