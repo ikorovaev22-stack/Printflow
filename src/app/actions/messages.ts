@@ -43,3 +43,37 @@ export async function clearChat(clientId: string): Promise<{ error?: string }> {
   revalidatePath("/admin", "layout");
   return {};
 }
+
+// "Завершённые" folder; a new message from either side brings the chat back to the active ones
+export async function closeChat(clientId: string): Promise<{ error?: string }> {
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("close_chat", { p_client_id: clientId });
+  if (error) return { error: "Не удалось завершить чат" };
+  revalidatePath("/admin/chat", "layout");
+  return {};
+}
+
+export async function reopenChat(clientId: string): Promise<{ error?: string }> {
+  const { supabase } = await requireStaff();
+  const { error } = await supabase.rpc("reopen_chat", { p_client_id: clientId });
+  if (error) return { error: "Не удалось вернуть чат в активные" };
+  revalidatePath("/admin/chat", "layout");
+  return {};
+}
+
+export type MessageHit = { id: string; clientId: string; body: string; fromClient: boolean; at: string };
+
+// Chat search by message text; names are matched in the browser
+export async function searchMessages(query: string): Promise<MessageHit[]> {
+  const { supabase } = await requireStaff();
+  const q = query.trim().slice(0, 100);
+  if (q.length < 2) return [];
+  const { data } = await supabase
+    .from("messages")
+    .select("id, client_id, body, from_client, created_at")
+    .ilike("body", `%${q.replace(/[\\%_]/g, "\\$&")}%`)
+    .order("created_at", { ascending: false })
+    .limit(30)
+    .returns<Message[]>();
+  return (data ?? []).map((m) => ({ id: m.id, clientId: m.client_id, body: m.body, fromClient: m.from_client, at: m.created_at }));
+}

@@ -238,7 +238,7 @@ function ItemSection({ index, count, item, field, update }: { index: number; cou
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <Input
           aria-label="Название позиции"
-          placeholder="Название, например «Листовки А5»"
+          placeholder="Название позиции"
           value={name}
           onChange={(e) => field([...base, "name"]).onChange(e.target.value)}
           maxLength={L.name}
@@ -262,11 +262,11 @@ function ItemSection({ index, count, item, field, update }: { index: number; cou
       </div>
 
       <div className={cn("flex flex-col gap-6", !on && "opacity-50")}>
-        <Block title="Тиражи" hint="Цена всего тиража, когда в каждом параметре выбран вариант с коэффициентом 1. Клиент выбирает один из этих тиражей.">
+        <Block title="Тиражи" hint="Стоимость всего тиража, когда в каждом параметре выбран вариант с коэффициентом 1. Клиент выбирает один из этих тиражей.">
           {tiers.map((_, t) => (
             <Row key={t} cols="grid-cols-2 sm:grid-cols-[10rem_12rem]" onRemove={tiers.length > 1 ? () => remove([...base, "tiers"], t) : undefined} what="тираж">
               <NumberField label="Тираж" hideLabel={t > 0} suffix="шт." {...field([...base, "tiers", t, "qty"])} />
-              <NumberField label="Цена тиража" hideLabel={t > 0} suffix="₽" {...field([...base, "tiers", t, "price"])} />
+              <NumberField label="Стоимость тиража" hideLabel={t > 0} suffix="₽" {...field([...base, "tiers", t, "price"])} />
             </Row>
           ))}
           <AddButton disabled={tiers.length >= L.tiers} onClick={() => add([...base, "tiers"], { qty: "", price: "" })}>
@@ -276,7 +276,7 @@ function ItemSection({ index, count, item, field, update }: { index: number; cou
 
         <Block
           title="Параметры"
-          hint="Клиент выбирает один вариант в каждом параметре — например, бумагу или цветность. Коэффициент умножает цену тиража; первый вариант выбран по умолчанию."
+          hint="Клиент выбирает один вариант в каждом параметре — например, бумагу или цветность. Коэффициент умножает стоимость тиража; первый вариант выбран по умолчанию."
         >
           {options.map((o, k) => {
             const op: Path = [...base, "options", k];
@@ -284,12 +284,12 @@ function ItemSection({ index, count, item, field, update }: { index: number; cou
             return (
               <div key={String(o.id)} className="flex flex-col gap-3 rounded-tile border p-4">
                 <div className="flex items-center gap-2">
-                  <TextField label="Название параметра" hideLabel placeholder="Параметр, например «Бумага»" maxLength={40} {...field([...op, "name"])} />
+                  <TextField label="Название параметра" hideLabel placeholder="Название параметра" maxLength={40} {...field([...op, "name"])} />
                   <RemoveButton label="Удалить параметр" onClick={() => remove([...base, "options"], k)} />
                 </div>
                 {choices.map((c, j) => (
                   <Row key={String(c.id)} cols="sm:grid-cols-[1fr_10rem]" onRemove={choices.length > 1 ? () => remove([...op, "choices"], j) : undefined} what="вариант">
-                    <TextField label="Вариант" hideLabel={j > 0} placeholder="Мелованная 130 г/м²" maxLength={L.name} {...field([...op, "choices", j, "name"])} />
+                    <TextField label="Вариант" hideLabel={j > 0} placeholder="Название варианта" maxLength={L.name} {...field([...op, "choices", j, "name"])} />
                     <NumberField label="Коэффициент" hideLabel={j > 0} suffix="×" {...field([...op, "choices", j, "coef"])} />
                   </Row>
                 ))}
@@ -310,7 +310,7 @@ function ItemSection({ index, count, item, field, update }: { index: number; cou
         <Block title="Доп. услуги" hint="Клиент включает их переключателем. Цена за штуку, но не меньше минимума за заказ; фиксированная цена — 0 за штуку и сумма в минимуме.">
           {extras.map((e, j) => (
             <Row key={String(e.id)} cols="sm:grid-cols-[1fr_9rem_9rem]" onRemove={() => remove([...base, "extras"], j)} what="услугу">
-              <TextField label="Услуга" hideLabel={j > 0} placeholder="Скругление углов" maxLength={L.name} {...field([...base, "extras", j, "name"])} />
+              <TextField label="Услуга" hideLabel={j > 0} placeholder="Название услуги" maxLength={L.name} {...field([...base, "extras", j, "name"])} />
               <NumberField label="За штуку" hideLabel={j > 0} suffix="₽" {...field([...base, "extras", j, "perPiece"])} />
               <NumberField label="Минимум за заказ" hideLabel={j > 0} suffix="₽" {...field([...base, "extras", j, "min"])} />
             </Row>

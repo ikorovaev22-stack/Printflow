@@ -52,8 +52,6 @@ export async function moveFaq(id: string, dir: -1 | 1) {
 export async function saveCompany(_: FormState, fd: FormData): Promise<FormState> {
   const { supabase, company, profile } = await requireStaff();
   if (profile.role !== "owner") return { error: "Только владелец может менять настройки" };
-  const color = opt(fd, "brand_color") ?? "";
-  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return { error: "Цвет должен быть в формате #RRGGBB" };
   const name = opt(fd, "name");
   if (!name) return { error: "Укажите название" };
   const timezone = opt(fd, "timezone") ?? company.timezone;
@@ -73,7 +71,6 @@ export async function saveCompany(_: FormState, fd: FormData): Promise<FormState
     .from("companies")
     .update({
       name,
-      brand_color: color,
       logo_url: logoUrl,
       phone: opt(fd, "phone"),
       email: opt(fd, "email"),

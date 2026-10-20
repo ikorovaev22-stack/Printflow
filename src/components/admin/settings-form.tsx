@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { brandStyle } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import type { Company } from "@/lib/types";
 
@@ -32,17 +31,13 @@ const TIME_ZONES = [
   ["Asia/Tashkent", "Ташкент (UTC+5)"],
 ];
 
-const PRESETS = ["#4f46e5", "#2563eb", "#0891b2", "#059669", "#65a30d", "#d97706", "#dc2626", "#db2777", "#7c3aed", "#18181b"];
-
 export function SettingsForm({ company }: { company: Company }) {
   const [state, action, pending] = useActionState(saveCompany, undefined);
   const [name, setName] = useState(company.name);
-  const [color, setColor] = useState(company.brand_color);
   const [logo, setLogo] = useState(company.logo_url);
   const [finishing, setFinishing] = useState(company.finishing_stage);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const validColor = /^#[0-9a-fA-F]{6}$/.test(color);
 
   useEffect(() => {
     if (state?.message) toast.success(state.message);
@@ -88,24 +83,6 @@ export function SettingsForm({ company }: { company: Company }) {
             </div>
           </div>
           <Field label="Название" name="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required />
-          <div className="flex flex-col gap-2">
-            <Label>Фирменный цвет</Label>
-            <div className="flex flex-wrap items-center gap-2">
-              {PRESETS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className="size-8 rounded-full ring-offset-2 ring-offset-background transition data-[active=true]:ring-2"
-                  data-active={c === color}
-                  style={{ background: c, "--tw-ring-color": c } as React.CSSProperties}
-                  aria-label={c}
-                />
-              ))}
-              <input type="color" value={validColor ? color : "#000000"} onChange={(e) => setColor(e.target.value)} className="size-8 cursor-pointer rounded-full border-0 bg-transparent p-0" />
-              <Input name="brand_color" value={color} onChange={(e) => setColor(e.target.value)} className="w-28 font-mono" />
-            </div>
-          </div>
         </section>
         <section className="grid gap-4 md:grid-cols-2">
           <h2 className="font-semibold md:col-span-2">Контакты</h2>
@@ -165,9 +142,7 @@ export function SettingsForm({ company }: { company: Company }) {
 
       <aside>
         <p className="mb-3 text-sm font-medium text-muted-foreground">Предпросмотр приложения</p>
-        <div
-          style={validColor ? brandStyle(color) : undefined}
-          className="brand-scope overflow-hidden rounded-[2.5rem] border-[10px] border-primary bg-background pb-4"
+        <div className="brand-scope overflow-hidden rounded-[2.5rem] border-[10px] border-primary bg-background pb-4"
         >
           <div className="flex items-center gap-2.5 px-4 pt-5">
             <CompanyLogo company={{ id: company.id, name, logo_url: logo }} className="size-9 rounded-full text-sm" />
@@ -199,7 +174,6 @@ export function SettingsForm({ company }: { company: Company }) {
             <span className="mr-3 size-2 rounded-full bg-muted-foreground/30" />
           </div>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Фирменный цвет — акцент: текущий этап, иконки и непрочитанные. Основные кнопки остаются тёмными.</p>
       </aside>
     </div>
   );

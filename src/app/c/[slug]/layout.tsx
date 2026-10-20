@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Pr
     description: `Статус заказов и чат с ${company.name}`,
     manifest: `/c/${slug}/manifest.webmanifest`,
     appleWebApp: { capable: true, title: company.name, statusBarStyle: "default" },
-    icons: { icon: `/c/${slug}/app-icon/192`, apple: `/c/${slug}/app-icon/180` },
+    icons: { icon: `/c/${slug}/app-icon/192`, apple: `/c/${slug}/app-icon/180?opaque=1` },
     other: { "apple-mobile-web-app-capable": "yes" },
   };
 }

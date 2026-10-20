@@ -65,6 +65,9 @@ export type Message = {
   created_at: string;
 };
 
+// A chat with no row is active and was never completed
+export type ChatState = { client_id: string; closed_at: string | null; closed_count: number };
+
 export type OrderEvent = { status: OrderStatus; created_at: string };
 
 export type OrderFile = {

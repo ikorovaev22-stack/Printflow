@@ -32,9 +32,10 @@ type Props = {
   empty?: React.ReactNode;
   // Dialog header on the staff side; the chat adds its own thread actions to it
   header?: React.ReactNode;
+  actions?: React.ReactNode;
 };
 
-export function Chat({ clientId, side, initialMessages, empty, header }: Props) {
+export function Chat({ clientId, side, initialMessages, empty, header, actions }: Props) {
   const router = useRouter();
   const timeZone = useTimeZone();
   const [supabase] = useState(createClient);
@@ -123,7 +124,10 @@ export function Chat({ clientId, side, initialMessages, empty, header }: Props) 
       {header && (
         <header className="flex items-center gap-2 border-b bg-card px-3 py-3 md:px-5">
           {header}
-          {side === "staff" && messages.length > 0 && <ClearChatButton onConfirm={clear} />}
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            {messages.length > 0 && actions}
+            {side === "staff" && messages.length > 0 && <ClearChatButton onConfirm={clear} />}
+          </div>
         </header>
       )}
       <div role="log" aria-label="Переписка" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-5">
@@ -217,7 +221,7 @@ function ClearChatButton({ onConfirm }: { onConfirm: () => void }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="ml-auto shrink-0 text-muted-foreground">
+        <Button variant="ghost" size="sm" className="text-muted-foreground">
           <Trash2 /> <span className="max-md:sr-only">Очистить переписку</span>
         </Button>
       </AlertDialogTrigger>
