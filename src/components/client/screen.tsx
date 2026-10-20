@@ -1,7 +1,8 @@
 import { BackLink } from "@/components/client/back-link";
 import { cn } from "@/lib/utils";
 
-// Mobile screen frame: top bar (back or leading + actions), two-tone title, content above the floating bottom bar
+// Screen frame: top bar (back or leading + actions), two-tone title, content above the floating bottom bar.
+// Phone-first; from tablets up the column gets wider and the margins roomier
 export function Screen({
   title,
   eyebrow,
@@ -23,7 +24,7 @@ export function Screen({
   return (
     <main
       className={cn(
-        "mx-auto max-w-md px-5 pt-[max(env(safe-area-inset-top),1.25rem)] pb-[calc(7rem+env(safe-area-inset-bottom))]",
+        "mx-auto max-w-md px-5 pt-[max(env(safe-area-inset-top),1.25rem)] pb-[calc(7rem+env(safe-area-inset-bottom))] md:max-w-2xl md:px-8 md:pt-[max(env(safe-area-inset-top),2.5rem)] lg:max-w-3xl",
         className,
       )}
     >

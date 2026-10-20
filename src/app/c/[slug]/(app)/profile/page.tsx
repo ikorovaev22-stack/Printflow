@@ -26,35 +26,42 @@ export default async function ProfileScreen({ params }: PageProps<"/c/[slug]/pro
         </div>
       </section>
 
-      <SectionTitle>Личные данные</SectionTitle>
-      <ProfileForm profile={profile} />
+      {/* From tablets up: personal data on the left, settings and links on the right */}
+      <div className="md:grid md:grid-cols-2 md:items-start md:gap-x-6">
+        <div>
+          <SectionTitle>Личные данные</SectionTitle>
+          <ProfileForm profile={profile} />
+        </div>
 
-      <SectionTitle>Уведомления и тема</SectionTitle>
-      <div className="flex flex-col gap-2">
-        <PushToggle />
-        <ThemeSwitch />
-      </div>
+        <div>
+          <SectionTitle>Уведомления и тема</SectionTitle>
+          <div className="flex flex-col gap-2">
+            <PushToggle />
+            <ThemeSwitch />
+          </div>
 
-      <SectionTitle>Ещё</SectionTitle>
-      <div className="flex flex-col gap-2">
-        <Link href={`/c/${slug}/about`} className="flex items-center gap-4 rounded-card bg-card p-4 transition-colors hover:bg-card/70">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted">
-            <Store className="size-5" />
-          </span>
-          <span className="min-w-0 flex-1 truncate font-medium">О типографии «{company.name.replace(/^.*«|»$/g, "")}»</span>
-          <ChevronRight className="size-5 text-muted-foreground" />
-        </Link>
-        <SignOutForm slug={slug}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-4 rounded-card bg-card p-4 text-left font-medium text-destructive transition-colors hover:bg-card/70"
-          >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-              <LogOut className="size-5" />
-            </span>
-            Выйти
-          </button>
-        </SignOutForm>
+          <SectionTitle>Ещё</SectionTitle>
+          <div className="flex flex-col gap-2">
+            <Link href={`/c/${slug}/about`} className="flex items-center gap-4 rounded-card bg-card p-4 transition-colors hover:bg-card/70">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted">
+                <Store className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1 truncate font-medium">О типографии «{company.name.replace(/^.*«|»$/g, "")}»</span>
+              <ChevronRight className="size-5 text-muted-foreground" />
+            </Link>
+            <SignOutForm slug={slug}>
+              <button
+                type="submit"
+                className="flex w-full items-center gap-4 rounded-card bg-card p-4 text-left font-medium text-destructive transition-colors hover:bg-card/70"
+              >
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                  <LogOut className="size-5" />
+                </span>
+                Выйти
+              </button>
+            </SignOutForm>
+          </div>
+        </div>
       </div>
     </Screen>
   );

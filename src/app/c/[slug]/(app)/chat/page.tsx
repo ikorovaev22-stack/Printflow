@@ -20,8 +20,8 @@ export default async function ChatScreen({ params }: PageProps<"/c/[slug]/chat">
   const phone = company.phone?.replace(/[^\d+]/g, "");
 
   return (
-    <main className="mx-auto flex h-dvh max-w-md flex-col pb-[calc(4.5rem+max(env(safe-area-inset-bottom),0.75rem))]">
-      <header className="flex items-center gap-3 px-5 pt-[max(env(safe-area-inset-top),1.25rem)] pb-3">
+    <main className="mx-auto flex h-dvh max-w-md flex-col pb-[calc(4.5rem+max(env(safe-area-inset-bottom),0.75rem))] md:max-w-2xl lg:max-w-3xl">
+      <header className="flex items-center gap-3 px-5 pt-[max(env(safe-area-inset-top),1.25rem)] pb-3 md:px-8 md:pt-[max(env(safe-area-inset-top),2.5rem)]">
         <CompanyLogo company={company} className="size-12 rounded-full" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-semibold">{company.name}</h1>

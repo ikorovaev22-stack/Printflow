@@ -209,6 +209,66 @@ describe("RLS: deleting messages", () => {
   });
 });
 
+// Before the flood test: client A writes into a completed chat
+describe("RLS: chat folders", () => {
+  const chat = async () =>
+    (await admin.from("chats").select("closed_at, closed_count").eq("client_id", ctx.A.clientId).maybeSingle()).data;
+
+  test("only staff of the client's company complete a chat; clients neither see nor change folders", async () => {
+    for (const [sb, who] of [[clientA, "the client"], [staffB, "staff of another company"]] as const) {
+      const { error } = await sb.rpc("close_chat", { p_client_id: ctx.A.clientId });
+      assert.notEqual(error, null, `chat completed by ${who}`);
+    }
+    const staffThread = await staffA.rpc("close_chat", { p_client_id: ctx.A.staffId });
+    assert.notEqual(staffThread.error, null, "chat completed for a staff profile");
+    assert.equal(await chat(), null);
+
+    const { error } = await staffA.rpc("close_chat", { p_client_id: ctx.A.clientId });
+    assert.equal(error, null);
+    assert.equal((await chat())?.closed_count, 1);
+    assert.equal((await staffA.from("chats").select("client_id").eq("client_id", ctx.A.clientId)).data?.length, 1);
+    for (const [sb, who] of [[clientA, "the client"], [staffB, "staff of another company"]] as const) {
+      const { data } = await sb.from("chats").select("client_id");
+      assert.equal(data?.length ?? 0, 0, `folder seen by ${who}`);
+    }
+
+    // Writes go only through close_chat / reopen_chat
+    for (const sb of [clientA, staffA]) {
+      const upd = await sb.from("chats").update({ closed_at: null, closed_count: 0 }).eq("client_id", ctx.A.clientId);
+      assert.notEqual(upd.error, null, "folder changed directly");
+    }
+    const ins = await staffA.from("chats").insert({ client_id: ctx.A.staffId, company_id: ctx.A.companyId });
+    assert.notEqual(ins.error, null, "folder row inserted directly");
+    for (const sb of [clientA, staffB]) await sb.rpc("reopen_chat", { p_client_id: ctx.A.clientId });
+    assert.ok((await chat())?.closed_at, "chat reopened by the client or by staff of another company");
+  });
+
+  test("a new message brings the chat back; completing again counts, reopening by hand undoes it", async () => {
+    const { error } = await clientA
+      .from("messages")
+      .insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: ctx.A.clientId, body: "Снова я" });
+    assert.equal(error, null);
+    // Active again, and the earlier completion makes the client a repeat one
+    assert.deepEqual(await chat(), { closed_at: null, closed_count: 1 });
+
+    for (let i = 0; i < 2; i++) assert.equal((await staffA.rpc("close_chat", { p_client_id: ctx.A.clientId })).error, null);
+    assert.equal((await chat())?.closed_count, 2, "completing a completed chat counted twice");
+    for (let i = 0; i < 2; i++) assert.equal((await staffA.rpc("reopen_chat", { p_client_id: ctx.A.clientId })).error, null);
+    assert.deepEqual(await chat(), { closed_at: null, closed_count: 1 });
+  });
+
+  test("message search ignores the case of Cyrillic letters and stays within the company", async () => {
+    const { error } = await admin
+      .from("messages")
+      .insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: ctx.A.staffId, body: "Ваш Заказ ГОТОВ, ёлки уже упакованы" });
+    assert.equal(error, null);
+    const own = await staffA.from("messages").select("body").ilike("body", "%заказ готов, Ёлки%");
+    assert.equal(own.data?.length, 1);
+    const foreign = await staffB.from("messages").select("body").ilike("body", "%заказ готов%");
+    assert.equal(foreign.data?.length ?? 0, 0, "message of another company found");
+  });
+});
+
 const pdf = () => new Blob(["%PDF-1.4 test"], { type: "application/pdf" });
 
 describe("RLS: history, files, notifications, limits", () => {

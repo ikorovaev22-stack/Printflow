@@ -15,7 +15,7 @@ export function BannerStrip({ banners, className }: { banners: Banner[]; classNa
     <>
       <ul
         aria-label="Акции и услуги"
-        className={cn("-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-2 overflow-x-auto px-5 [scrollbar-width:none]", className)}
+        className={cn("-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-2 overflow-x-auto px-5 [scrollbar-width:none] md:-mx-8 md:scroll-px-8 md:px-8", className)}
       >
         {banners.map((b) => (
           <li key={b.id} className="shrink-0 snap-start">

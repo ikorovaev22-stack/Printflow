@@ -188,27 +188,30 @@ function ReadyCard({ slug, order }: { slug: string; order: Order }) {
 function OrderList({ slug, orders, empty }: { slug: string; orders: Order[]; empty?: string }) {
   if (!orders.length) return <p className="py-10 text-center text-muted-foreground">{empty}</p>;
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
       {orders.map((o) => {
         const Icon = STATUS_ICONS[o.status];
         const delivered = o.status === "delivered";
         return (
           <li key={o.id}>
+            {/* A row on phones; a tile in the two columns from tablets up, the title under the icon and status */}
             <Link
               href={`/c/${slug}/orders/${o.id}`}
-              className="flex items-center gap-4 rounded-card bg-card p-4 transition-transform active:scale-98 motion-reduce:active:scale-100"
+              className="grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 rounded-card bg-card p-4 transition-transform active:scale-98 motion-reduce:active:scale-100 md:grid-cols-[auto_minmax(0,1fr)] md:content-start md:gap-y-3"
             >
               <span className="flex size-12 shrink-0 items-center justify-center rounded-tile bg-muted">
                 <Icon className="size-5" />
               </span>
-              <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className={cn("truncate font-semibold", delivered && "text-muted-foreground")}>{o.title}</span>
+              <span className="flex min-w-0 flex-col gap-1 md:col-span-2 md:row-start-2">
+                <span className={cn("truncate font-semibold md:line-clamp-2 md:whitespace-normal", delivered && "text-muted-foreground")}>
+                  {o.title}
+                </span>
                 <span className="text-sm text-muted-foreground">
                   №{o.number}
                   {o.due_date && !delivered && ` · до ${formatDateShort(o.due_date)}`}
                 </span>
               </span>
-              <StatusBadge status={o.status} />
+              <StatusBadge status={o.status} className="md:col-start-2 md:row-start-1 md:justify-self-end" />
             </Link>
           </li>
         );

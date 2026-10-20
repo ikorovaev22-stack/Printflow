@@ -70,6 +70,40 @@ test.describe("signed-in owner", () => {
     await expect(page.getByText("Сообщений пока нет")).toBeVisible();
   });
 
+  test("completes a chat, finds it in «Завершённые» and by text, brings it back", async ({ page }) => {
+    await page.goto("/admin/clients");
+    await page.getByRole("link", { name: "Ольга Волкова" }).click();
+    await page.getByRole("link", { name: "Написать" }).click();
+    await expect(page).toHaveURL(/\/admin\/chat\/[0-9a-f-]{36}$/);
+    // A new message makes the chat active, whatever an earlier run left
+    const text = `Папки чатов, e2e ${Date.now()}`;
+    await page.getByRole("textbox", { name: "Сообщение" }).fill(text);
+    await page.getByRole("button", { name: "Отправить" }).click();
+    await expect(page.getByRole("log", { name: "Переписка" }).getByText(text)).toBeVisible();
+    await page.reload();
+
+    const list = page.getByRole("complementary");
+    const folders = list.getByRole("tablist", { name: "Папки" });
+    const dialog = list.getByRole("link", { name: /Ольга Волкова/ });
+    await expect(dialog).toBeVisible();
+    await page.getByRole("button", { name: "Завершить чат" }).click();
+    await expect(page.getByRole("button", { name: "Вернуть в активные" })).toBeVisible();
+    await expect(dialog).toHaveCount(0);
+    await folders.getByRole("tab", { name: /Завершённые/ }).click();
+    await expect(dialog).toBeVisible();
+
+    // Upper case on purpose: the search ignores the case of Cyrillic letters
+    await list.getByRole("searchbox", { name: "Поиск по чатам" }).fill(text.toUpperCase());
+    await expect(list.locator("mark")).toHaveText(text);
+    await expect(list.getByText("Завершён", { exact: true }).first()).toBeVisible();
+    await list.getByRole("searchbox", { name: "Поиск по чатам" }).fill("");
+
+    await page.getByRole("button", { name: "Вернуть в активные" }).click();
+    await expect(page.getByRole("button", { name: "Завершить чат" })).toBeVisible();
+    await folders.getByRole("tab", { name: /Активные/ }).click();
+    await expect(dialog).toBeVisible();
+  });
+
   test("owner deletes a client with their account", async ({ page, browser }) => {
     const email = `delete-me-${Date.now()}@example.com`;
     const guest = await browser.newContext();
