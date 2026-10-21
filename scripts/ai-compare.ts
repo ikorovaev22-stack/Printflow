@@ -2,8 +2,8 @@
 // format as the app. Shows each answer, whether it chose correctly between answering and passing to a manager,
 // speed, tokens and the cost of 1000 answers.
 //
-//   npm run ai:compare -- gemini-2.5-flash claude-haiku-5-5
-//   npm run ai:compare -- gemini-2.5-flash=0.3/2.5 claude-haiku-5-5=1/5     # price per 1M tokens: input/output
+//   npm run ai:compare -- gemini-3.8-flash claude-sonnet-5-5
+//   npm run ai:compare -- gemini-3.8-flash=0.15/0.15 claude-sonnet-5-5=0.35/0.35   # price per 1M tokens: input/output
 //
 // Takes AI_BASE_URL and AI_API_KEY from .env.local; sends only the demo print shop below, no client data
 import { config } from "dotenv";
