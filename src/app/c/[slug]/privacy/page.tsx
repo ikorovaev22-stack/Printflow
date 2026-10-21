@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { Screen } from "@/components/client/screen";
+import { aiConfigured } from "@/lib/assistant-server";
 import { getCompanyBySlug } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = { title: "Политика конфиденциальности" };
 
@@ -10,6 +12,10 @@ export default async function PrivacyScreen({ params }: PageProps<"/c/[slug]/pri
   const company = await getCompanyBySlug(slug);
   if (!company) notFound();
   const contacts = [company.email, company.phone].filter(Boolean).join(", ");
+  // Only while the chat autoresponder is on (its settings are visible to staff only, hence the service role)
+  const admin = aiConfigured() ? createAdminClient() : null;
+  const { data: ai } = admin ? await admin.from("ai_settings").select("mode").eq("company_id", company.id).maybeSingle() : { data: null };
+  const assistant = !!ai && ai.mode !== "off";
 
   const sections: { title: string; body: React.ReactNode }[] = [
     {
@@ -37,6 +43,14 @@ export default async function PrivacyScreen({ params }: PageProps<"/c/[slug]/pri
       title: "Где хранятся и кому передаются",
       body: "На сервере в России, который типография арендует у хостинг-провайдера. Письма уходят через почтовый сервис типографии, уведомления на телефон — в зашифрованном виде через сервис уведомлений вашего браузера. Другим лицам данные не передаются, кроме случаев, предусмотренных законом.",
     },
+    ...(assistant
+      ? [
+          {
+            title: "Помощник на основе искусственного интеллекта",
+            body: "Чтобы быстрее отвечать в чате, типография использует сервис искусственного интеллекта: ему передаются ваши сообщения в чате и сведения о текущих заказах (номер, название, статус, срок), но не имя, телефон и email. Серверы сервиса могут находиться за пределами России. Ответы помощника подписаны «ИИ-помощник», сложные вопросы решает менеджер.",
+          },
+        ]
+      : []),
     {
       title: "Сколько хранятся",
       body: "Пока у вас есть аккаунт. После удаления аккаунта данные удаляются в течение 30 дней, кроме тех, что нужно хранить по закону (например, документы по оплате).",

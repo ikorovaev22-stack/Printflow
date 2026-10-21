@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import { answerClientMessage } from "@/lib/assistant-server";
 import { getSession, requireStaff } from "@/lib/auth";
 import { notifyMessage } from "@/lib/notify";
 import type { Message } from "@/lib/types";
@@ -24,6 +25,8 @@ export async function sendMessage(clientId: string, body: string): Promise<{ mes
     return { error: error.message.includes("rate_limited") ? "Слишком много сообщений, подождите минуту" : "Не удалось отправить" };
   }
   after(() => notifyMessage(data));
+  // The AI assistant answers or drafts an answer when it is switched on
+  if (data.from_client) after(() => answerClientMessage(data));
   return { message: data };
 }
 
@@ -40,6 +43,8 @@ export async function clearChat(clientId: string): Promise<{ error?: string }> {
   const { supabase } = await requireStaff();
   const { error } = await supabase.from("messages").delete().eq("client_id", clientId);
   if (error) return { error: "Не удалось очистить переписку" };
+  // The AI assistant's draft answered a message that is gone now
+  await supabase.from("ai_drafts").update({ status: "dismissed" }).eq("client_id", clientId).eq("kind", "reply").eq("status", "pending");
   revalidatePath("/admin", "layout");
   return {};
 }

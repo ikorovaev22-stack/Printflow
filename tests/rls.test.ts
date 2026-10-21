@@ -269,6 +269,140 @@ describe("RLS: chat folders", () => {
   });
 });
 
+// Before the flood test: staff and the server write messages here
+describe("RLS: AI assistant", () => {
+  const replyDraft = async (extra: Record<string, unknown> = {}) => {
+    const { data, error } = await admin
+      .from("ai_drafts")
+      .insert({ company_id: ctx.A.companyId, kind: "reply", client_id: ctx.A.clientId, body: "Визитки будут готовы завтра", ...extra })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return data.id as string;
+  };
+  const status = async (id: string) => (await admin.from("ai_drafts").select("status, decided_by").eq("id", id).single()).data!;
+
+  test("only the owner sets the assistant up; staff read it, clients and other companies see nothing", async () => {
+    const own = [
+      await ownerA.from("ai_settings").upsert({ company_id: ctx.A.companyId, mode: "draft" }),
+      await ownerA.from("ai_prompts").upsert({ company_id: ctx.A.companyId, kind: "reply", body: "Отвечай коротко" }),
+      await ownerA.from("ai_knowledge").insert({ company_id: ctx.A.companyId, title: "Макеты", body: "PDF, 300 dpi" }),
+      await ownerA.from("ai_templates").insert({ company_id: ctx.A.companyId, question: "Счёт?", answer: "Да" }),
+    ];
+    for (const res of own) assert.equal(res.error, null);
+
+    const byStaff = [
+      await staffA.from("ai_settings").upsert({ company_id: ctx.A.companyId, mode: "auto" }),
+      await staffA.from("ai_prompts").upsert({ company_id: ctx.A.companyId, kind: "content", body: "x" }),
+      await staffA.from("ai_knowledge").insert({ company_id: ctx.A.companyId, title: "x", body: "x" }),
+      await staffA.from("ai_templates").insert({ company_id: ctx.A.companyId, question: "x", answer: "x" }),
+      await ownerA.from("ai_knowledge").insert({ company_id: ctx.B.companyId, title: "x", body: "x" }),
+    ];
+    for (const res of byStaff) assert.notEqual(res.error, null, "assistant set up by staff or for another company");
+    const prompt = await staffA.from("ai_prompts").update({ body: "hacked" }).eq("company_id", ctx.A.companyId).select();
+    assert.equal(prompt.data?.length ?? 0, 0);
+
+    for (const table of ["ai_settings", "ai_prompts", "ai_knowledge", "ai_templates"]) {
+      assert.equal((await staffA.from(table).select("company_id")).data?.length, 1, `staff read ${table}`);
+      for (const [sb, who] of [[clientA, "client"], [staffB, "staff B"], [anon, "anon"]] as const) {
+        const { data } = await sb.from(table).select("company_id").eq("company_id", ctx.A.companyId);
+        assert.equal(data?.length ?? 0, 0, `${who} reads ${table}`);
+      }
+    }
+  });
+
+  test("reply drafts: written by the server, sent by any staff of the company, once", async () => {
+    const forged = await ownerA.from("ai_drafts").insert({ company_id: ctx.A.companyId, kind: "reply", client_id: ctx.A.clientId, body: "x" });
+    assert.notEqual(forged.error, null, "reply draft inserted by a person");
+    const id = await replyDraft();
+    assert.equal((await clientA.from("ai_drafts").select("id")).data?.length ?? 0, 0, "client sees drafts");
+    for (const sb of [clientA, staffB]) {
+      const { error } = await sb.rpc("publish_ai_draft", { p_draft_id: id, p_title: null, p_body: "hack" });
+      assert.notEqual(error, null, "draft published by a client or another company");
+    }
+
+    const { data: messageId, error } = await staffA.rpc("publish_ai_draft", { p_draft_id: id, p_title: null, p_body: " Готовы завтра к 12:00 " });
+    assert.equal(error, null);
+    const { data: m } = await admin.from("messages").select("body, sender_id, ai, from_client").eq("id", messageId).single();
+    assert.deepEqual(m, { body: "Готовы завтра к 12:00", sender_id: ctx.A.staffId, ai: false, from_client: false });
+    assert.deepEqual(await status(id), { status: "published", decided_by: ctx.A.staffId });
+
+    const again = await staffA.rpc("publish_ai_draft", { p_draft_id: id, p_title: null, p_body: "ещё раз" });
+    assert.match(again.error?.message ?? "", /draft_decided/);
+    const undo = await staffA.from("ai_drafts").update({ status: "pending" }).eq("id", id).select();
+    assert.notEqual(undo.error, null, "a decision was undone");
+  });
+
+  test("news and FAQ drafts: only the owner writes and publishes them; news are public", async () => {
+    const byStaff = await staffA.from("ai_drafts").insert({ company_id: ctx.A.companyId, kind: "post", title: "x", body: "x" });
+    assert.notEqual(byStaff.error, null, "news draft by staff");
+    const { data: drafts, error } = await ownerA
+      .from("ai_drafts")
+      .insert([
+        { company_id: ctx.A.companyId, kind: "post", title: "Скидка 10%", body: "На визитки до конца месяца" },
+        { company_id: ctx.A.companyId, kind: "faq", title: "Можно макет в Word?", body: "Да, мы переведём его в PDF" },
+      ])
+      .select("id, kind");
+    assert.equal(error, null);
+    const post = drafts!.find((d) => d.kind === "post")!.id;
+    const faq = drafts!.find((d) => d.kind === "faq")!.id;
+
+    const staffPublish = await staffA.rpc("publish_ai_draft", { p_draft_id: post, p_title: "Скидка", p_body: "x" });
+    assert.notEqual(staffPublish.error, null, "news published by staff");
+    const empty = await ownerA.rpc("publish_ai_draft", { p_draft_id: post, p_title: " ", p_body: "x" });
+    assert.match(empty.error?.message ?? "", /draft_empty/);
+
+    const { data: postId } = await ownerA.rpc("publish_ai_draft", { p_draft_id: post, p_title: "Скидка 10%", p_body: "На визитки" });
+    const { data: faqId } = await ownerA.rpc("publish_ai_draft", { p_draft_id: faq, p_title: "Можно макет в Word?", p_body: "Да" });
+    assert.equal((await anon.from("posts").select("title").eq("id", postId)).data?.[0]?.title, "Скидка 10%", "news are public");
+    assert.equal((await admin.from("faqs").select("answer").eq("id", faqId).single()).data?.answer, "Да");
+
+    const direct = await ownerA.from("posts").insert({ company_id: ctx.A.companyId, title: "x", body: "x" });
+    assert.notEqual(direct.error, null, "news published without a draft");
+    for (const sb of [staffA, staffB]) {
+      const { data } = await sb.from("posts").delete().eq("id", postId).select();
+      assert.equal(data?.length ?? 0, 0, "news deleted by staff");
+    }
+    assert.equal((await ownerA.from("posts").delete().eq("id", postId).select()).data?.length, 1);
+  });
+
+  test("the assistant's messages come only from the server; a manager's own message settles pending replies", async () => {
+    const forged = await clientA.from("messages").insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: ctx.A.clientId, body: "x", ai: true });
+    assert.notEqual(forged.error, null, "client marks a message as the assistant's");
+    const noSender = await staffA.from("messages").insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: null, body: "x" });
+    assert.notEqual(noSender.error, null, "message without a sender");
+
+    const { data: ai } = await admin
+      .from("messages")
+      .insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: null, ai: true, body: "Автоответ" })
+      .select("id, from_client")
+      .single();
+    assert.equal(ai!.from_client, false);
+    const read = await clientA.from("messages").update({ read_at: new Date().toISOString() }).eq("id", ai!.id).select("id");
+    assert.equal(read.data?.length, 1, "client cannot mark the assistant's message as read");
+
+    const draft = await replyDraft();
+    const handoff = await replyDraft({ body: null, handoff: true, note: "Просит скидку" });
+    await admin.from("messages").insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: null, ai: true, body: "Передал менеджеру" });
+    assert.equal((await status(handoff)).status, "pending", "the assistant's own message settled the handoff");
+    const { error } = await staffA.from("messages").insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: ctx.A.staffId, body: "Здравствуйте, я менеджер" });
+    assert.equal(error, null);
+    for (const id of [draft, handoff]) assert.deepEqual(await status(id), { status: "dismissed", decided_by: ctx.A.staffId });
+
+    // Deleting a message that a decided draft answered keeps the draft and its decision
+    const { data: asked } = await admin
+      .from("messages")
+      .insert({ company_id: ctx.A.companyId, client_id: ctx.A.clientId, sender_id: ctx.A.clientId, body: "Вопрос" })
+      .select("id")
+      .single();
+    const answered = await replyDraft({ message_id: asked!.id, status: "published" });
+    const del = await staffA.from("messages").delete().eq("id", asked!.id).select("id");
+    assert.equal(del.error, null);
+    assert.equal(del.data?.length, 1);
+    assert.equal((await status(answered)).status, "published");
+  });
+});
+
 const pdf = () => new Blob(["%PDF-1.4 test"], { type: "application/pdf" });
 
 describe("RLS: history, files, notifications, limits", () => {

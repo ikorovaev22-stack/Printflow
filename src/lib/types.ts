@@ -1,3 +1,4 @@
+import type { AiMode, DraftKind } from "@/lib/assistant";
 import type { CalcInput, QuoteLine } from "@/lib/pricing";
 
 export type Role = "client" | "staff" | "owner";
@@ -58,10 +59,12 @@ export type Message = {
   id: string;
   company_id: string;
   client_id: string;
-  sender_id: string;
+  // null for the assistant's own messages (ai)
+  sender_id: string | null;
   body: string;
   read_at: string | null;
   from_client: boolean;
+  ai: boolean;
   created_at: string;
 };
 
@@ -85,6 +88,35 @@ export type OrderFile = {
 export type Banner = { id: string; company_id: string; path: string; title: string | null; position: number };
 
 export type Faq = { id: string; company_id: string; question: string; answer: string; position: number };
+
+export type Post = { id: string; company_id: string; title: string; body: string; created_at: string };
+
+export type AiSettings = { company_id: string; mode: AiMode; handoff_text: string | null };
+export type AiKnowledge = {
+  id: string;
+  company_id: string;
+  title: string;
+  body: string;
+  url: string | null;
+  fetched_at: string | null;
+  enabled: boolean;
+  created_at: string;
+};
+export type AiTemplate = { id: string; company_id: string; question: string; answer: string; position: number };
+// reply: an answer to a chat message, or a handoff to a manager (no body); post: news; faq: question (title) and answer
+export type AiDraft = {
+  id: string;
+  company_id: string;
+  kind: DraftKind;
+  status: "pending" | "published" | "dismissed";
+  client_id: string | null;
+  message_id: string | null;
+  title: string | null;
+  body: string | null;
+  handoff: boolean;
+  note: string | null;
+  created_at: string;
+};
 
 export const STATUSES: { value: OrderStatus; label: string; dot: string }[] = [
   { value: "accepted", label: "Принят", dot: "bg-zinc-400" },

@@ -4,17 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "sh scripts/dev-local.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "db:push": "sh -c 'set -a; . ./.env.local; supabase db push --db-url \"$DATABASE_URL\"'",
     "seed": "tsx scripts/seed.ts",
-    "test:unit": "node --import tsx --test tests/pricing.test.ts",
+    "test:unit": "node --import tsx --test tests/pricing.test.ts tests/assistant.test.ts",
     "test:rls": "node --import tsx --test tests/rls.test.ts",
     "create-company": "tsx scripts/create-company.ts",
     "create-staff": "tsx scripts/create-staff.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "ai:compare": "tsx scripts/ai-compare.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

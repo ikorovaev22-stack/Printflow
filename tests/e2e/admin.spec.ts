@@ -43,7 +43,7 @@ test.describe("signed-in owner", () => {
     await expect(page).toHaveURL(/\/admin\/chat\/[0-9a-f-]{36}$/);
     const text = `Удалите меня, e2e ${Date.now()}`;
     await page.getByRole("textbox", { name: "Сообщение" }).fill(text);
-    await page.getByRole("button", { name: "Отправить" }).click();
+    await page.getByRole("button", { name: "Отправить", exact: true }).click();
     // In the thread itself: the dialog list shows the same text as a preview, sometimes before the thread does.
     // includeHidden: an open menu hides the rest of the page from the accessibility tree
     const thread = page.getByRole("log", { name: "Переписка", includeHidden: true });
@@ -61,7 +61,7 @@ test.describe("signed-in owner", () => {
     // Something to clear, whatever the thread held before
     const another = `Очистите меня, e2e ${Date.now()}`;
     await page.getByRole("textbox", { name: "Сообщение" }).fill(another);
-    await page.getByRole("button", { name: "Отправить" }).click();
+    await page.getByRole("button", { name: "Отправить", exact: true }).click();
     await expect(thread.getByText(another)).toBeVisible();
     await page.getByRole("button", { name: "Очистить переписку" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Очистить" }).click();
@@ -78,7 +78,7 @@ test.describe("signed-in owner", () => {
     // A new message makes the chat active, whatever an earlier run left
     const text = `Папки чатов, e2e ${Date.now()}`;
     await page.getByRole("textbox", { name: "Сообщение" }).fill(text);
-    await page.getByRole("button", { name: "Отправить" }).click();
+    await page.getByRole("button", { name: "Отправить", exact: true }).click();
     await expect(page.getByRole("log", { name: "Переписка" }).getByText(text)).toBeVisible();
     await page.reload();
 

@@ -15,9 +15,9 @@ import { requireClient } from "@/lib/auth";
 import { getBanners } from "@/lib/banners";
 import { getPriceList } from "@/lib/price-list";
 import { isEnabled, productList } from "@/lib/pricing";
-import { formatDateShort, greeting } from "@/lib/format";
+import { formatDate, formatDateShort, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { DELIVERY_LABELS, STATUSES, companyStatuses, type Order } from "@/lib/types";
+import { DELIVERY_LABELS, STATUSES, companyStatuses, type Order, type Post } from "@/lib/types";
 
 export const metadata = { title: "Мои заказы" };
 
@@ -25,10 +25,11 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
   const { slug } = await params;
   const { view } = (await searchParams) as { view?: string };
   const { supabase, profile, company } = await requireClient(slug);
-  const [{ data }, prices, banners] = await Promise.all([
+  const [{ data }, prices, banners, { data: posts }] = await Promise.all([
     supabase.from("orders").select("*").eq("client_id", profile.id).order("created_at", { ascending: false }).returns<Order[]>(),
     getPriceList(company.id),
     getBanners(company.id),
+    supabase.from("posts").select("*").eq("company_id", company.id).order("created_at", { ascending: false }).limit(2).returns<Post[]>(),
   ]);
   const calculator = !!prices && isEnabled(prices.prices);
   const orders = data ?? [];
@@ -113,6 +114,34 @@ export default async function OrdersScreen({ params, searchParams }: PageProps<"
               <OrderList slug={slug} orders={rest} />
             </>
           )}
+        </>
+      )}
+
+      {!archive && !!posts?.length && (
+        <>
+          <SectionTitle
+            action={
+              <Link href={`/c/${slug}/news`} className="text-sm font-medium text-muted-foreground hover:text-foreground">
+                Все новости
+              </Link>
+            }
+          >
+            Новости
+          </SectionTitle>
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {posts.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/c/${slug}/news#${p.id}`}
+                  className="flex h-full flex-col gap-1 rounded-card bg-card p-4 transition-transform active:scale-98 motion-reduce:active:scale-100"
+                >
+                  <span className="text-xs text-muted-foreground">{formatDate(p.created_at, company.timezone)}</span>
+                  <span className="font-semibold">{p.title}</span>
+                  <span className="line-clamp-2 text-sm text-muted-foreground">{p.body}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </>
       )}
     </Screen>

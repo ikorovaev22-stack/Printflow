@@ -59,6 +59,10 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_SENDER_NAME} <${SMTP_ADMIN_EMAIL}>
+      # AI assistant: an OpenAI-compatible API reachable from Russia; empty turns the model off
+      AI_BASE_URL: ${PRINTFLOW_AI_BASE_URL:-}
+      AI_API_KEY: ${PRINTFLOW_AI_API_KEY:-}
+      AI_MODEL: ${PRINTFLOW_AI_MODEL:-}
     # Server-side Supabase calls go to Caddy on this host, not out and back in
     extra_hosts:
       - "sb.${PRINTFLOW_DOMAIN}:host-gateway"

@@ -15,10 +15,13 @@ export type Dialog = {
   name: string;
   last: string;
   lastFromClient: boolean;
+  lastAi: boolean;
   at: string;
   unread: number;
   closed: boolean;
   repeat: boolean;
+  // The AI assistant's pending draft, or a question it passed to a manager
+  ai?: "draft" | "handoff";
 };
 
 // Folders "Активные" / "Завершённые" and search by name (here) and message text (on the server)
@@ -120,9 +123,19 @@ function DialogRows({ dialogs, empty, tagClosed }: { dialogs: Dialog[]; empty: s
               </div>
               <div className="flex items-center justify-between gap-2">
                 <p className={cn("truncate text-sm", d.unread ? "text-foreground" : "text-muted-foreground")}>
-                  {!d.lastFromClient && "Вы: "}
+                  {!d.lastFromClient && (d.lastAi ? "ИИ: " : "Вы: ")}
                   {d.last}
                 </p>
+                {d.ai && (
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 text-[11px] font-medium",
+                      d.ai === "handoff" ? "bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-100" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {d.ai === "handoff" ? "Нужен менеджер" : "Черновик ИИ"}
+                  </span>
+                )}
                 {!!d.unread && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground">
                     {d.unread}

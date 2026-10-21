@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calculator, CircleHelp, LogOut, MessagesSquare, Package, Settings, Users } from "lucide-react";
+import { Calculator, CircleHelp, LogOut, MessagesSquare, Package, Settings, Sparkles, Users } from "lucide-react";
 import { CompanyLogo } from "@/components/company-logo";
 import { PushButton } from "@/components/push-toggle";
 import { SignOutForm } from "@/components/sign-out-form";
@@ -31,6 +31,7 @@ export function AppSidebar({ company, profile, unread }: { company: Company; pro
     { href: "/admin/faq", label: "Вопросы", icon: CircleHelp },
     ...(profile.role === "owner"
       ? [
+          { href: "/admin/ai", label: "ИИ-помощник", icon: Sparkles },
           { href: "/admin/prices", label: "Цены", icon: Calculator },
           { href: "/admin/settings", label: "Настройки", icon: Settings },
         ]

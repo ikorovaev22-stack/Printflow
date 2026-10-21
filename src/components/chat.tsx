@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, CheckCheck, Check, Ellipsis, Trash2 } from "lucide-react";
+import { ArrowUp, CheckCheck, Check, Ellipsis, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { clearChat, deleteMessage, sendMessage } from "@/app/actions/messages";
 import {
@@ -33,9 +33,11 @@ type Props = {
   // Dialog header on the staff side; the chat adds its own thread actions to it
   header?: React.ReactNode;
   actions?: React.ReactNode;
+  // Above the message field on the staff side: the AI assistant's draft
+  aside?: React.ReactNode;
 };
 
-export function Chat({ clientId, side, initialMessages, empty, header, actions }: Props) {
+export function Chat({ clientId, side, initialMessages, empty, header, actions, aside }: Props) {
   const router = useRouter();
   const timeZone = useTimeZone();
   const [supabase] = useState(createClient);
@@ -147,6 +149,11 @@ export function Chat({ clientId, side, initialMessages, empty, header, actions }
               >
                 <p className="break-words whitespace-pre-wrap">{m.body}</p>
                 <p className={cn("mt-1 flex items-center justify-end gap-1 text-[11px] tabular-nums", mine ? "text-primary-foreground/60" : "text-muted-foreground")}>
+                  {m.ai && (
+                    <span className="mr-1 flex items-center gap-0.5">
+                      <Sparkles aria-hidden className="size-3" /> ИИ-помощник ·
+                    </span>
+                  )}
                   {formatChatTime(m.created_at, timeZone)}
                   {mine &&
                     (m.read_at ? (
@@ -162,6 +169,7 @@ export function Chat({ clientId, side, initialMessages, empty, header, actions }
         })}
         <div ref={bottomRef} />
       </div>
+      {aside}
       <form
         onSubmit={(e) => {
           e.preventDefault();

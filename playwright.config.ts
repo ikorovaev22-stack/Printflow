@@ -1,8 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// E2E against a local stack with demo data: npx supabase start && npm run seed && npm run build && npm start
+// E2E against a local stack with demo data: npx supabase start && npm run seed && npm run build && npm start.
+// AI assistant specs need the app started with the stand-in model (tests/e2e/ai-mock.ts, started here):
+// AI_BASE_URL=http://127.0.0.1:4010/v1 AI_API_KEY=test AI_MODEL=mock AI_REPLY_DELAY_MS=0 npm start — otherwise they are skipped
 export default defineConfig({
   testDir: "tests/e2e",
+  webServer: { command: "node --import tsx tests/e2e/ai-mock.ts", url: "http://127.0.0.1:4010/health", reuseExistingServer: true },
   workers: 1,
   reporter: "list",
   use: {
@@ -23,7 +26,7 @@ export default defineConfig({
     },
     {
       name: "admin",
-      testMatch: /admin\.spec\.ts/,
+      testMatch: /(admin|assistant)\.spec\.ts/,
       dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 } },
     },
