@@ -53,6 +53,7 @@ export function Chat({ clientId, side, initialMessages, empty, header, actions, 
 
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | undefined;
+    let stopped = false;
     const markRead = () =>
       supabase
         .from("messages")
@@ -64,6 +65,7 @@ export function Chat({ clientId, side, initialMessages, empty, header, actions, 
         .then(({ data }) => data?.length && router.refresh());
 
     supabase.auth.getSession().then(({ data }) => {
+      if (stopped) return;
       if (data.session) supabase.realtime.setAuth(data.session.access_token);
       channel = supabase
         .channel(`chat:${clientId}`)
@@ -89,6 +91,7 @@ export function Chat({ clientId, side, initialMessages, empty, header, actions, 
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
+      stopped = true;
       if (channel) supabase.removeChannel(channel);
     };
   }, [supabase, clientId, incomingFromClient, router]);

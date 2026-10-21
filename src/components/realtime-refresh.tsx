@@ -9,7 +9,10 @@ export function RealtimeRefresh({ table, filter }: { table: string; filter: stri
   useEffect(() => {
     const supabase = createClient();
     let channel: ReturnType<typeof supabase.channel> | undefined;
+    // Unmounted before the session arrived (a quick remount): subscribing now would reuse the next mount's channel
+    let stopped = false;
     supabase.auth.getSession().then(({ data }) => {
+      if (stopped) return;
       if (data.session) supabase.realtime.setAuth(data.session.access_token);
       channel = supabase
         .channel(`${table}:${filter}`)
@@ -17,6 +20,7 @@ export function RealtimeRefresh({ table, filter }: { table: string; filter: stri
         .subscribe();
     });
     return () => {
+      stopped = true;
       if (channel) supabase.removeChannel(channel);
     };
   }, [table, filter, router]);
