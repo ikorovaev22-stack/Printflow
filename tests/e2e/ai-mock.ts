@@ -1,4 +1,5 @@
-// OpenAI-compatible stand-in for the AI assistant in E2E: answers by the format the server asks for.
+// Stand-in for the AI gateway in E2E: answers by the format the server asks for, over the OpenAI-compatible API
+// and the Anthropic Messages API (models "claude-…").
 // The app must point at it: AI_BASE_URL=http://127.0.0.1:4010/v1 AI_API_KEY=test AI_MODEL=mock AI_REPLY_DELAY_MS=0
 import { createServer } from "node:http";
 
@@ -20,16 +21,24 @@ function answer(messages: Message[]) {
 
 createServer((req, res) => {
   if (req.method === "GET" && req.url === "/health") return res.end("ok");
-  if (req.method !== "POST" || !req.url?.endsWith("/chat/completions")) {
+  const claude = req.url?.endsWith("/v1/messages");
+  if (req.method !== "POST" || !(claude || req.url?.endsWith("/chat/completions"))) {
     res.statusCode = 404;
     return res.end();
   }
   let raw = "";
   req.on("data", (c) => (raw += c));
   req.on("end", () => {
-    const body = JSON.parse(raw) as { messages: Message[] };
-    const out = answer(body.messages);
+    const body = JSON.parse(raw) as { messages: Message[]; system?: string };
+    const out = answer(claude ? [{ role: "system", content: body.system ?? "" }, ...body.messages] : body.messages);
+    const text = typeof out === "string" ? out : JSON.stringify(out);
     res.setHeader("content-type", "application/json");
-    res.end(JSON.stringify({ choices: [{ message: { role: "assistant", content: typeof out === "string" ? out : JSON.stringify(out) } }] }));
+    res.end(
+      JSON.stringify(
+        claude
+          ? { id: "msg_mock", type: "message", role: "assistant", model: "mock", content: [{ type: "text", text }], stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 1 } }
+          : { choices: [{ message: { role: "assistant", content: text } }] },
+      ),
+    );
   });
 }).listen(4010, "127.0.0.1");
