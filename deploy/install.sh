@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# PrintFlow + self-hosted Supabase on one server (Ubuntu 24.04, run as root): app, database, auth, files and
+# The app + self-hosted Supabase on one server (Ubuntu 24.04, run as root): app, database, auth, files and
 # realtime chat all live on this machine. Safe to re-run: after editing deploy/.env or `git pull` it applies
 # the settings, rebuilds the app and runs new database migrations.
 #
@@ -37,7 +37,7 @@ CONFIRM_EMAIL=$(conf CONFIRM_EMAIL)
 
 case "$DOMAIN" in
   ""|app.example.ru) die "укажите свой DOMAIN в deploy/.env" ;;
-  http*|*/*) die "DOMAIN — только имя, без https:// и слэшей (например, zakaz.ottisk.ru)" ;;
+  http*|*/*) die "DOMAIN — только имя, без https:// и слэшей (например, zakaz.example.ru)" ;;
 esac
 
 # ── 1. Supabase files and secrets (first run only) ──────────────────────
@@ -83,10 +83,10 @@ set_env SITE_URL "https://$DOMAIN"
 set_env ADDITIONAL_REDIRECT_URLS "https://$DOMAIN/**"
 
 set_env PRINTFLOW_DOMAIN "$DOMAIN"
-set_env PRINTFLOW_APP_NAME "${APP_NAME:-PrintFlow}"
+set_env PRINTFLOW_APP_NAME "${APP_NAME:-Арт Проджект}"
 set_env PRINTFLOW_DEFAULT_COMPANY_SLUG "$(conf DEFAULT_COMPANY_SLUG)"
-set_env STUDIO_DEFAULT_ORGANIZATION "${APP_NAME:-PrintFlow}"
-set_env STUDIO_DEFAULT_PROJECT "${APP_NAME:-PrintFlow}"
+set_env STUDIO_DEFAULT_ORGANIZATION "${APP_NAME:-Арт Проджект}"
+set_env STUDIO_DEFAULT_PROJECT "${APP_NAME:-Арт Проджект}"
 set_env OPENAI_API_KEY ""
 
 # Clients sign up with email and password only
@@ -142,7 +142,7 @@ sh ./migrate.sh
 # ── 4. Nightly backups ──────────────────────────────────────────────────
 if [ "$(uname -s)" = "Linux" ] && [ -d /etc/cron.d ] && [ "$(id -u)" = "0" ]; then
   cat > /etc/cron.d/printflow-backup <<EOF
-# PrintFlow: database and files backup every night, see deploy/backup.sh
+# The app: database and files backup every night, see deploy/backup.sh
 30 3 * * * root sh $DEPLOY_DIR/backup.sh >> /var/log/printflow-backup.log 2>&1
 EOF
 fi

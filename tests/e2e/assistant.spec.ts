@@ -23,14 +23,14 @@ async function setMode(page: Page, mode: "Выключен" | "Черновик�
 async function newClient(browser: Browser, name: string) {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto("/c/demo/register");
+  await page.goto("/c/artproject/register");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Имя и фамилия").fill(name);
   await page.getByLabel("Email").fill(`ai-${Date.now()}@example.com`);
   await page.getByLabel("Пароль", { exact: true }).fill("Assistant-1");
   await page.getByRole("checkbox", { name: /обработку персональных данных/ }).check();
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
-  await expect(page).toHaveURL(/\/c\/demo$/);
+  await expect(page).toHaveURL(/\/c\/artproject$/);
   return { context, page };
 }
 
@@ -89,7 +89,7 @@ test("a news draft is checked, published and seen by clients", async ({ page, br
 
   const client = await browser.newContext({ storageState: CLIENT_STATE });
   const home = await client.newPage();
-  await home.goto("/c/demo");
+  await home.goto("/c/artproject");
   await home.getByRole("link", { name: new RegExp(title) }).click();
   await expect(home.getByRole("heading", { name: title })).toBeVisible();
   await expect(home.getByText("В праздник открыты с 10:00 до 15:00.")).toBeVisible();
@@ -129,11 +129,11 @@ test.describe("with a model", () => {
     try {
       const client = await browser.newContext({ storageState: CLIENT_STATE });
       const chat = await client.newPage();
-      await chat.goto("/c/demo/chat");
+      await chat.goto("/c/artproject/chat");
       await say(chat, `Когда будут готовы визитки? e2e ${Date.now()}`);
 
       await page.goto("/admin/clients");
-      await page.getByRole("link", { name: "Анна Смирнова" }).click();
+      await page.getByRole("link", { name: "Елена Соколова" }).click();
       await page.getByRole("link", { name: "Написать" }).click();
       const draft = page.getByRole("region", { name: "Черновик ответа ИИ" });
       await expect(draft.getByRole("textbox")).toHaveValue(/Визитки печатаем от 1 дня/, { timeout: 15_000 });
@@ -154,7 +154,7 @@ test.describe("with a model", () => {
     await setMode(page, "Отвечает сам");
     try {
       const { context, page: app } = await newClient(browser, name);
-      await app.goto("/c/demo/chat");
+      await app.goto("/c/artproject/chat");
       await say(app, "Сколько стоят визитки?");
       const log = app.getByRole("log", { name: "Переписка" });
       await expect(log.getByText("Визитки печатаем от 1 дня")).toBeVisible({ timeout: 15_000 });

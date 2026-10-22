@@ -74,7 +74,7 @@ function get(url: URL, maxBytes: number, timeoutMs: number): Promise<Raw> {
       {
         lookup,
         timeout: timeoutMs,
-        headers: { "user-agent": "Mozilla/5.0 (compatible; PrintFlowBot/1.0)", accept: "text/html,text/plain;q=0.9", "accept-language": "ru" },
+        headers: { "user-agent": "Mozilla/5.0 (compatible; ArtProjectBot/1.0)", accept: "text/html,text/plain;q=0.9", "accept-language": "ru" },
       },
       (res) => {
         const status = res.statusCode ?? 0;

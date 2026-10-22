@@ -5,7 +5,7 @@ import { CLIENT, CLIENT_STATE, OWNER, OWNER_STATE, login } from "./helpers";
 mkdirSync("tests/e2e/.auth", { recursive: true });
 
 setup("sign in as the demo client", async ({ page }) => {
-  await login(page, "/c/demo/login", CLIENT);
+  await login(page, "/c/artproject/login", CLIENT);
   await page.context().storageState({ path: CLIENT_STATE });
 });
 

@@ -1,5 +1,5 @@
 // Adds a manager (or another owner) to an existing print shop.
-// Usage: npm run create-staff -- --slug ottisk --email manager@ottisk.ru --password 'S3cure-pass' --name "Ольга Иванова" \
+// Usage: npm run create-staff -- --slug artproject --email manager@example.ru --password 'S3cure-pass' --name "Ольга Иванова" \
 //          [--phone "+7 900 000-00-00"] [--role staff|owner]
 import { parseArgs } from "node:util";
 import { config } from "dotenv";

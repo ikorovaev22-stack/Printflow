@@ -1,6 +1,6 @@
 # DESIGN.md
 
-Правила визуального стиля PrintFlow. Источник — три референса в `docs/design-references/` (ориентир по стилю, не макет). UI построен на shadcn/ui + Tailwind v4; токены живут в `src/app/globals.css`.
+Правила визуального стиля приложения. UI построен на shadcn/ui + Tailwind v4; токены живут в `src/app/globals.css`.
 
 ## Характер
 

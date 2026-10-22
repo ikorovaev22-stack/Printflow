@@ -1,4 +1,4 @@
-// PrintFlow service worker: installability and push notifications, no offline caching (see ROADMAP.md)
+// Service worker: installability and push notifications, no offline caching
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 

@@ -1,8 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
-export const PASSWORD = "Demo1234!";
-export const CLIENT = "anna@printflow.demo";
-export const OWNER = "owner@printflow.demo";
+export const PASSWORD = "ArtProject2026!";
+export const CLIENT = "elena@artproject.demo";
+export const OWNER = "owner@artproject.demo";
 export const CLIENT_STATE = "tests/e2e/.auth/client.json";
 export const OWNER_STATE = "tests/e2e/.auth/owner.json";
 

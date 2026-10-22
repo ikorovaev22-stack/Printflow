@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Backup of everything PrintFlow stores: database rows (app data, accounts, file records) and uploaded files.
+# Backup of everything the app stores: database rows (app data, accounts, file records) and uploaded files.
 # install.sh runs it every night via /etc/cron.d/printflow-backup; restore with deploy/restore.sh.
 #
 #   sh deploy/backup.sh          # → deploy/backups/<date>_db.dump and <date>_files.tar.gz

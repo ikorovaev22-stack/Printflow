@@ -2,13 +2,13 @@ import { expect, test } from "@playwright/test";
 import { CLIENT, CLIENT_STATE } from "./helpers";
 
 test("without a session the client app asks to sign in", async ({ page }) => {
-  await page.goto("/c/demo");
-  await expect(page).toHaveURL(/\/c\/demo\/login$/);
+  await page.goto("/c/artproject");
+  await expect(page).toHaveURL(/\/c\/artproject\/login$/);
   await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
 });
 
 test("wrong password shows an error", async ({ page }) => {
-  await page.goto("/c/demo/login");
+  await page.goto("/c/artproject/login");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Email").fill(CLIENT);
   await page.getByLabel("Пароль", { exact: true }).fill("wrong-password");
@@ -17,9 +17,9 @@ test("wrong password shows an error", async ({ page }) => {
 });
 
 test("forgot password answers the same for any address", async ({ page }) => {
-  await page.goto("/c/demo/login");
+  await page.goto("/c/artproject/login");
   await page.getByRole("link", { name: "Забыли пароль?" }).click();
-  await expect(page).toHaveURL(/\/auth\/forgot\?slug=demo$/);
+  await expect(page).toHaveURL(/\/auth\/forgot\?slug=artproject$/);
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Email").fill(`nobody-${Date.now()}@example.com`);
   await page.getByRole("button", { name: "Прислать ссылку" }).click();
@@ -27,7 +27,7 @@ test("forgot password answers the same for any address", async ({ page }) => {
 });
 
 test("sign-up needs consent to personal data processing", async ({ page }) => {
-  await page.goto("/c/demo/register");
+  await page.goto("/c/artproject/register");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Имя и фамилия").fill("Новый Клиент");
   await page.getByLabel("Email").fill(`new-${Date.now()}@example.com`);
@@ -44,25 +44,26 @@ test("sign-up needs consent to personal data processing", async ({ page }) => {
 
   await consent.check();
   await page.getByRole("button", { name: "Создать аккаунт" }).click();
-  await expect(page).toHaveURL(/\/c\/demo$/);
+  await expect(page).toHaveURL(/\/c\/artproject$/);
   await expect(page.getByRole("heading", { name: "Ваши заказы" })).toBeVisible();
 });
 
 test.describe("signed-in client", () => {
   test.use({ storageState: CLIENT_STATE });
-  test.beforeEach(({ page }) => page.goto("/c/demo"));
+  test.beforeEach(({ page }) => page.goto("/c/artproject"));
 
   test("sees orders and the stage history of an order", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Ваши заказы" })).toBeVisible();
-    await page.getByRole("link", { name: /Каталог продукции/ }).first().click();
-    await expect(page.getByRole("heading", { name: "Каталог продукции, 40 стр." })).toBeVisible();
+    await page.getByRole("link", { name: /Визитки Soft Touch/ }).first().click();
+    await expect(page.getByRole("heading", { name: "Визитки Soft Touch с тиснением, 1000 шт." })).toBeVisible();
+    // «Постпечать» is switched off for this print shop
     const steps = page.locator("ol li");
-    await expect(steps).toHaveCount(6);
+    await expect(steps).toHaveCount(5);
     await expect(steps.first()).toContainText(/\d{1,2} [а-я]+\.?, \d{2}:\d{2}/);
   });
 
   test("attaches a layout to an order", async ({ page }) => {
-    await page.getByRole("link", { name: /Каталог продукции/ }).first().click();
+    await page.getByRole("link", { name: /Визитки Soft Touch/ }).first().click();
     const name = `layout-${Date.now()}.pdf`;
     await page.locator("input[type=file]").setInputFiles({ name, mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 e2e") });
     await expect(page.getByText(name, { exact: true })).toBeVisible();
@@ -77,7 +78,7 @@ test.describe("signed-in client", () => {
   });
 
   test("switches the theme", async ({ page }) => {
-    await page.goto("/c/demo/profile");
+    await page.goto("/c/artproject/profile");
     await page.getByRole("radio", { name: "Тёмная" }).click();
     await expect(page.locator("html")).toHaveClass(/dark/);
     await page.getByRole("radio", { name: "Как в системе" }).click();

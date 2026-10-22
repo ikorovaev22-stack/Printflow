@@ -1,11 +1,11 @@
-// Compares models for the chat autoresponder on typical print shop questions: the same prompt, knowledge and answer
+// Compares models for the chat autoresponder on typical questions of «Арт Проджект» clients: the same prompt, knowledge and answer
 // format as the app. Shows each answer, whether it chose correctly between answering and passing to a manager,
 // speed, tokens and the cost of 1000 answers.
 //
 //   npm run ai:compare -- gemini-3.8-flash claude-sonnet-5-5
 //   npm run ai:compare -- gemini-3.8-flash=0.15/0.15 claude-sonnet-5-5=0.35/0.35   # price per 1M tokens: input/output
 //
-// Takes AI_BASE_URL and AI_API_KEY from .env.local; sends only the demo print shop below, no client data
+// Takes AI_BASE_URL and AI_API_KEY from .env.local; sends only the public card and FAQ below, no client data
 import { config } from "dotenv";
 import { AiHttpError, chatCompletion } from "../src/lib/ai-client";
 import { PROMPTS, knowledgeText, parseReply, replyMessages, type Knowledge } from "../src/lib/assistant";
@@ -14,45 +14,46 @@ config({ path: ".env.local", quiet: true });
 
 const KNOWLEDGE: Knowledge = {
   company: {
-    name: "Типография «Оттиск»",
-    address: "Москва, ул. Полиграфическая, 12",
-    work_hours: "Пн–Пт 9:00–20:00, Сб 10:00–16:00, Вс — выходной",
-    phone: "+7 (495) 123-45-67",
-    email: "hello@ottisk.ru",
-    telegram: "ottisk_print",
+    name: "Арт Проджект",
+    address: "Краснодар, ул. Карякина, 25 (1 цоколь)",
+    work_hours: "Пн–Пт 12:00–20:00, Сб 12:00–18:00. Приём заказов: 11:00–20:00",
+    phone: "+7 (938) 455-55-10",
+    email: "a0-a8@yandex.ru",
+    telegram: "ArtProject23",
     max_url: null,
   },
-  calculator: { url: "https://app.ottisk.ru/c/ottisk/calculator", products: ["Визитки", "Баннеры", "Листовки А5"] },
-  templates: [
-    { question: "Можно оплатить по счёту?", answer: "Да, выставим счёт на ООО или ИП, оплата в течение 3 рабочих дней. Реквизиты пришлите в чат." },
-    { question: "Есть ли доставка?", answer: "Да, по Москве курьером — 500 ₽, от 5000 ₽ бесплатно. Самовывоз — с ул. Полиграфической, 12." },
-  ],
+  calculator: { url: "https://app.example.ru/c/artproject/calculator", products: ["Визитки", "Баннеры", "Листовки А5"] },
+  templates: [],
   faqs: [
-    { question: "Сколько печатаются визитки?", answer: "Обычно 1 рабочий день, срочно — в день заказа, если макет пришёл до 12:00 (+50% к цене)." },
-    { question: "Можно прислать макет в Word?", answer: "Да, переведём в PDF и пришлём на согласование. Сложную вёрстку лучше присылать в PDF." },
+    {
+      question: "Какие услуги вы оказываете?",
+      answer: "Печать проектной документации, копирование, сканирование; визитки, брошюры, буклеты, листовки; баннеры, борды, ресторанные меню, блокноты, авторефераты; офсетные тиражи; печать А1–А6; сертификаты А4 и А3 с золотом, серебром и тиснением; бирки с логотипом для одежды и маркетплейсов. Цены ниже рыночных.",
+    },
+    { question: "Можно сделать заказ срочно?", answer: "Да. Срочная печать — запуск в день обращения. Цифровая печать — от 1 дня, офсет — сборными тиражами." },
+    { question: "Какие минимальные тиражи?", answer: "Листовки офсетом (сборные тиражи) — от 1000 шт. Бирки с логотипом — от 500 шт. Сертификаты А4 и А3 — от 10 шт. Нужен другой тираж — напишите в чат." },
+    {
+      question: "Какие требования к макету?",
+      answer: "PDF (версия 1.3) или TIFF, без скрытых слоёв. Только CMYK, без ICC-профилей, лимит краски не более 300%. Фото — 290–605 dpi. Шрифты в кривых. Визитка 90×50 мм: в файле 92×52 мм с вылетами по 1 мм, важное — не ближе 2 мм к краю.",
+    },
   ],
-  entries: [
-    { title: "Требования к макетам", body: "PDF или TIFF, 300 dpi, CMYK. Вылеты по 2 мм с каждой стороны. Шрифты в кривых. Проверку макета делаем бесплатно." },
-    { title: "Цены", body: "Визитки 90×50, 100 шт., мелованная 300 г/м², 4+0 — 700 ₽; 4+4 — 950 ₽. Листовки А5, 1000 шт. — от 3900 ₽. Баннер — от 450 ₽ за м². Тиражи от 5000 шт. и скидки обсуждает менеджер." },
-    { title: "Гарантия", body: "Если брак по нашей вине — перепечатаем бесплатно. Претензии принимает менеджер в течение 7 дней после выдачи." },
-  ],
+  entries: [],
   posts: [],
 };
 
 const ORDERS = [
-  { number: 13, title: "Листовки А5, 500 шт.", status: "Печать", due: "24 окт." },
-  { number: 12, title: "Визитки 90×50, 500 шт.", status: "Принят", due: null },
+  { number: 5, title: "Сертификаты А4 с золотым тиснением, 30 шт.", status: "Печать", due: "23 окт." },
+  { number: 7, title: "Автореферат, 100 экз.", status: "Принят", due: null },
 ];
 
 // expect: what a good assistant does; "any" — both are fine, read the answer
 const QUESTIONS: { q: string; expect: "answer" | "handoff" | "any" }[] = [
-  { q: "Здравствуйте! Сколько стоят визитки 100 штук, двусторонние?", expect: "answer" },
+  { q: "Здравствуйте! Сколько стоят визитки 100 штук?", expect: "any" },
   { q: "Какие требования к макету?", expect: "answer" },
-  { q: "Можно оплатить по счёту на ООО?", expect: "answer" },
-  { q: "Где мой заказ с листовками? Когда будет готов?", expect: "answer" },
+  { q: "Можно сделать заказ срочно, сегодня?", expect: "answer" },
+  { q: "Где мой заказ с сертификатами? Когда будет готов?", expect: "answer" },
   { q: "Во сколько вы работаете в субботу?", expect: "answer" },
-  { q: "У меня макет в ворде, так можно?", expect: "answer" },
-  { q: "Доставите в Подольск?", expect: "any" },
+  { q: "Какой минимальный тираж бирок с логотипом?", expect: "answer" },
+  { q: "Доставите в Новороссийск?", expect: "any" },
   { q: "Сделаете скидку 20%, если закажу 5000 листовок?", expect: "handoff" },
   { q: "Вы испортили мой заказ, цвета совсем не те. Верните деньги", expect: "handoff" },
   { q: "Позовите, пожалуйста, живого менеджера", expect: "handoff" },

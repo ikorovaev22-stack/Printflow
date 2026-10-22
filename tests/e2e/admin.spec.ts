@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { formatRub } from "../../src/lib/format";
-import { CLIENT, OWNER_STATE } from "./helpers";
+import { CLIENT, OWNER_STATE, PASSWORD } from "./helpers";
 
 test("a client account cannot enter the staff panel", async ({ page }) => {
   await page.goto("/admin/login");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Email").fill(CLIENT);
-  await page.getByLabel("Пароль", { exact: true }).fill("Demo1234!");
+  await page.getByLabel("Пароль", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page.getByText("нет доступа к панели управления")).toBeVisible();
 });
@@ -22,7 +22,7 @@ test.describe("signed-in owner", () => {
   });
 
   test("changes an order status from the table", async ({ page }) => {
-    const row = page.getByRole("row", { name: /Свадебные приглашения/ });
+    const row = page.getByRole("row", { name: /Бирки с логотипом/ });
     const current = (await row.getByRole("combobox").innerText()).trim();
     await row.getByRole("combobox").click();
     await page.getByRole("option", { name: current === "Печать" ? "Макет" : "Печать", exact: true }).click();
@@ -30,7 +30,7 @@ test.describe("signed-in owner", () => {
   });
 
   test("order page shows files and stage history", async ({ page }) => {
-    await page.getByRole("link", { name: "Каталог продукции, 40 стр." }).click();
+    await page.getByRole("link", { name: "Визитки Soft Touch с тиснением, 1000 шт." }).click();
     await expect(page.getByRole("heading", { name: "Файлы" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "История этапов" })).toBeVisible();
   });
@@ -38,7 +38,7 @@ test.describe("signed-in owner", () => {
   test("deletes a message and clears a chat", async ({ page }) => {
     // Through the client card: the thread may be empty (the test clears it), then it is not in the dialog list
     await page.goto("/admin/clients");
-    await page.getByRole("link", { name: "Иван Кузнецов" }).click();
+    await page.getByRole("link", { name: "Артём Ковалёв" }).click();
     await page.getByRole("link", { name: "Написать" }).click();
     await expect(page).toHaveURL(/\/admin\/chat\/[0-9a-f-]{36}$/);
     const text = `Удалите меня, e2e ${Date.now()}`;
@@ -72,7 +72,7 @@ test.describe("signed-in owner", () => {
 
   test("completes a chat, finds it in «Завершённые» and by text, brings it back", async ({ page }) => {
     await page.goto("/admin/clients");
-    await page.getByRole("link", { name: "Ольга Волкова" }).click();
+    await page.getByRole("link", { name: "Марина Лебедева" }).click();
     await page.getByRole("link", { name: "Написать" }).click();
     await expect(page).toHaveURL(/\/admin\/chat\/[0-9a-f-]{36}$/);
     // A new message makes the chat active, whatever an earlier run left
@@ -84,7 +84,7 @@ test.describe("signed-in owner", () => {
 
     const list = page.getByRole("complementary");
     const folders = list.getByRole("tablist", { name: "Папки" });
-    const dialog = list.getByRole("link", { name: /Ольга Волкова/ });
+    const dialog = list.getByRole("link", { name: /Марина Лебедева/ });
     await expect(dialog).toBeVisible();
     await page.getByRole("button", { name: "Завершить чат" }).click();
     await expect(page.getByRole("button", { name: "Вернуть в активные" })).toBeVisible();
@@ -108,14 +108,14 @@ test.describe("signed-in owner", () => {
     const email = `delete-me-${Date.now()}@example.com`;
     const guest = await browser.newContext();
     const signup = await guest.newPage();
-    await signup.goto("/c/demo/register");
+    await signup.goto("/c/artproject/register");
     await signup.waitForLoadState("networkidle");
     await signup.getByLabel("Имя и фамилия").fill("Удаляемый Клиент");
     await signup.getByLabel("Email").fill(email);
     await signup.getByLabel("Пароль", { exact: true }).fill("Delete-me-1");
     await signup.getByRole("checkbox", { name: /обработку персональных данных/ }).check();
     await signup.getByRole("button", { name: "Создать аккаунт" }).click();
-    await expect(signup).toHaveURL(/\/c\/demo$/);
+    await expect(signup).toHaveURL(/\/c\/artproject$/);
     await guest.close();
 
     await page.goto("/admin/clients");
@@ -127,7 +127,7 @@ test.describe("signed-in owner", () => {
     await expect(page.getByRole("link", { name: "Удаляемый Клиент" })).toHaveCount(0);
 
     await page.context().clearCookies();
-    await page.goto("/c/demo/login");
+    await page.goto("/c/artproject/login");
     await page.waitForLoadState("networkidle");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль", { exact: true }).fill("Delete-me-1");

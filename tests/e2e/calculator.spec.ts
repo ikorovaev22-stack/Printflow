@@ -10,7 +10,7 @@ const choose = (page: Page, group: string, option: string) =>
 const shownTotal = (page: Page) => page.getByRole("region", { name: "Итог расчёта" }).locator("[aria-live]");
 
 test("a guest calculates without an account and comes back to the same options after signing in", async ({ page }) => {
-  await page.goto("/c/demo/login");
+  await page.goto("/c/artproject/login");
   await page.getByRole("link", { name: "Рассчитать стоимость без входа" }).click();
   await expect(page.getByRole("heading", { name: "Расчёт стоимости" })).toBeVisible();
 
@@ -23,13 +23,13 @@ test("a guest calculates without an account and comes back to the same options a
   await expect(shownTotal(page)).toHaveText(total(banner));
 
   await page.getByRole("link", { name: "Войти и оформить" }).click();
-  await expect(page).toHaveURL(/\/c\/demo\/login\?next=/);
+  await expect(page).toHaveURL(/\/c\/artproject\/login\?next=/);
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Email").fill(CLIENT);
   await page.getByLabel("Пароль", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Войти" }).click();
 
-  await expect(page).toHaveURL(/\/c\/demo\/calculator\?p=banners&w=2\.5&h=1&mat=blackout/);
+  await expect(page).toHaveURL(/\/c\/artproject\/calculator\?p=banners&w=2\.5&h=1&mat=blackout/);
   await expect(shownTotal(page)).toHaveText(total(banner));
   await expect(page.getByRole("button", { name: "Оформить заказ" })).toBeVisible();
 });
@@ -38,7 +38,7 @@ test.describe("signed-in client", () => {
   test.use({ storageState: CLIENT_STATE });
 
   test("orders business cards at the calculated price; the request reaches the panel", async ({ page, browser }) => {
-    await page.goto("/c/demo");
+    await page.goto("/c/artproject");
     await page.getByRole("link", { name: /Рассчитать стоимость/ }).click();
 
     await choose(page, "Тираж", "500");
@@ -60,7 +60,7 @@ test.describe("signed-in client", () => {
     await page.getByLabel("Комментарий для менеджера").fill(comment);
     await page.getByRole("button", { name: "Оформить заказ" }).click();
 
-    await expect(page).toHaveURL(/\/c\/demo\/orders\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/c\/artproject\/orders\/[0-9a-f-]{36}$/);
     const orderId = page.url().split("/").pop();
     await expect(page.getByRole("heading", { name: "Визитки 90×50 мм, 500 шт." })).toBeVisible();
     await expect(page.getByText(sum).first()).toBeVisible();
@@ -78,7 +78,7 @@ test.describe("signed-in client", () => {
   });
 
   test("orders an own item with a layout attached; the file lands in the order", async ({ page }) => {
-    await page.goto("/c/demo/calculator");
+    await page.goto("/c/artproject/calculator");
     await choose(page, "Что печатаем", "Листовки А5");
     await choose(page, "Тираж", "500");
     await choose(page, "Печать", "Двусторонняя (4+4)");
@@ -89,7 +89,7 @@ test.describe("signed-in client", () => {
     await expect(page.getByText("maket.pdf")).toBeVisible();
     await page.getByRole("button", { name: "Оформить заказ" }).click();
 
-    await expect(page).toHaveURL(/\/c\/demo\/orders\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/c\/artproject\/orders\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("heading", { name: "Листовки А5, 500 шт." })).toBeVisible();
     await expect(page.getByText("maket.pdf")).toBeVisible();
   });

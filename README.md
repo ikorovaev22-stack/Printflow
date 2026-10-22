@@ -1,16 +1,8 @@
-# PrintFlow — приложение для типографии
+# Арт Проджект — приложение типографии
 
-Готовый шаблон: клиенты типографии сами видят статус и сроки заказов, присылают макеты и пишут менеджеру,
-а типография ведёт заказы в удобной панели. Клиентская часть — PWA: ставится на телефон как обычное приложение,
-в фирменном цвете и с логотипом типографии.
-
-<p>
-  <img src="docs/screenshots/client-orders.png" width="24%" alt="Заказы клиента">
-  <img src="docs/screenshots/client-order.png" width="24%" alt="Карточка заказа">
-  <img src="docs/screenshots/client-chat.png" width="24%" alt="Чат с менеджером">
-  <img src="docs/screenshots/client-orders-dark.png" width="24%" alt="Тёмная тема">
-</p>
-<img src="docs/screenshots/admin-order.png" alt="Панель типографии: заказ, файлы и история этапов">
+Клиенты типографии «Арт Проджект» видят статус и сроки заказов, присылают макеты, считают стоимость в калькуляторе
+и пишут менеджеру, а сотрудники ведут заказы в панели. Клиентская часть — PWA: ставится на телефон как обычное
+приложение, с логотипом и фирменным цветом типографии.
 
 ## Возможности
 
@@ -55,19 +47,20 @@
 
 ```bash
 npm install
-npx supabase start          # локальная Supabase в Docker; в конце выведет ключи
-cp .env.example .env.local  # заполните из вывода: API URL, anon key, service_role key, DB URL
-npm run seed                # демо-типография «Оттиск»: 3 клиента, 10 заказов
-npm run dev                 # http://localhost:3000
+cp .env.example .env.local  # ключи Supabase для локального запуска не нужны — их подставит dev:local
+npm run dev:local           # локальная Supabase в Docker с демо-данными и приложение на http://localhost:3000
 ```
 
-Демо-доступы (пароль у всех `Demo1234!`): клиент `anna@printflow.demo` → `/c/demo`, владелец `owner@printflow.demo` → `/admin`.
-Письма локально не уходят наружу — их видно в Mailpit: http://localhost:54324.
+Демо-данные (пароль у всех `ArtProject2026!`): владелец `owner@artproject.demo` → `/admin`, клиент
+`elena@artproject.demo` → `/c/artproject` — клиента откройте в другом браузере или окне инкогнито. Карточка,
+баннеры и вопросы — настоящие, клиенты и заказы — вымышленные. `npm run dev:local -- --seed` пересоздаёт демо-данные;
+`npm run seed` работает только с локальной базой и рабочую не тронет. Письма локально не уходят наружу — их видно
+в Mailpit: http://localhost:54324.
 
-## Установка для своей типографии
+## Установка на сервер
 
 Два варианта:
-- **Свой сервер в России** — для типографий в РФ. Приложение и Supabase (база, вход, файлы, чат) работают на одном сервере в России:
+- **Свой сервер в России** — рекомендуемый. Приложение и Supabase (база, вход, файлы, чат) работают на одном сервере в России:
   персональные данные клиентов не покидают РФ (152‑ФЗ), всё открывается без VPN.
 - **Vercel + Supabase Cloud** — запуск за 10 минут, но серверы за рубежом: в России без VPN сайт может не открываться.
 
@@ -89,14 +82,14 @@ npm run dev                 # http://localhost:3000
 3. Типография и владелец:
    ```bash
    cd deploy/supabase
-   docker compose run --rm tools scripts/create-company.ts --name "Типография «Оттиск»" --slug ottisk \
-     --email owner@ottisk.ru --password 'Надёжный-пароль' --owner "Мария Петрова" \
-     --phone "+7 (495) 123-45-67" --address "Москва, ул. Полиграфическая, 12" --color "#4f46e5"
+   docker compose run --rm tools scripts/create-company.ts --name "Арт Проджект" --slug artproject \
+     --email owner@example.ru --password 'Надёжный-пароль' --owner "Имя Фамилия" \
+     --phone "+7 (938) 455-55-10" --address "Краснодар, ул. Карякина, 25 (1 цоколь)" --color "#3b3187"
    ```
 4. Менеджеры (по одному на человека; `--role owner` — ещё один владелец):
    ```bash
-   docker compose run --rm tools scripts/create-staff.ts --slug ottisk \
-     --email manager@ottisk.ru --password 'Надёжный-пароль' --name "Ольга Иванова"
+   docker compose run --rm tools scripts/create-staff.ts --slug artproject \
+     --email manager@example.ru --password 'Надёжный-пароль' --name "Имя Фамилия"
    ```
 
 - **Обновление:** `git pull && sh deploy/install.sh` — пересобирает приложение и применяет новые миграции, ключи и данные не трогает.
@@ -125,11 +118,11 @@ npm run dev                 # http://localhost:3000
 8. **Authentication → Rate Limits**: все запросы идут с адреса вашего сервера, поэтому при большом числе клиентов поднимите лимиты входа и обновления токенов.
 9. Типография и владелец:
    ```bash
-   npm run create-company -- --name "Типография «Оттиск»" --slug ottisk \
-     --email owner@ottisk.ru --password 'Надёжный-пароль' --owner "Мария Петрова" \
-     --phone "+7 (495) 123-45-67" --address "Москва, ул. Полиграфическая, 12" --color "#4f46e5"
+   npm run create-company -- --name "Арт Проджект" --slug artproject \
+     --email owner@example.ru --password 'Надёжный-пароль' --owner "Имя Фамилия" \
+     --phone "+7 (938) 455-55-10" --address "Краснодар, ул. Карякина, 25 (1 цоколь)" --color "#3b3187"
    ```
-    Менеджеры: `npm run create-staff -- --slug ottisk --email manager@ottisk.ru --password '…' --name "Ольга Иванова"`.
+    Менеджеры: `npm run create-staff -- --slug artproject --email manager@example.ru --password '…' --name "Имя Фамилия"`.
 10. Импортируйте репозиторий в Vercel, добавьте переменные окружения из `.env.example` (кроме `DATABASE_URL`;
     `SUPABASE_SERVICE_ROLE_KEY` нужен для уведомлений) и нажмите Deploy.
 
@@ -176,9 +169,9 @@ npm run dev                 # http://localhost:3000
 Когда автоответчик включён, в политике конфиденциальности появляется пункт о передаче переписки нейросети.
 
 **Попробовать у себя на Mac, не трогая рабочий сайт**: запустите Docker Desktop, впишите `AI_BASE_URL`, `AI_API_KEY`,
-`AI_MODEL` в `.env.local` и выполните `npm run dev:local`. Поднимется локальная Supabase с демо-типографией (её данные
-не связаны с рабочей базой), приложение откроется на http://localhost:3000: панель — `owner@printflow.demo`,
-клиент — `anna@printflow.demo`, пароль `Demo1234!`. Клиентом пишите в чат во втором браузере или окне инкогнито.
+`AI_MODEL` в `.env.local` и выполните `npm run dev:local`. Поднимется локальная Supabase с демо-данными (они не связаны
+с рабочей базой), приложение откроется на http://localhost:3000: панель — `owner@artproject.demo`,
+клиент — `elena@artproject.demo`, пароль `ArtProject2026!`. Клиентом пишите в чат во втором браузере или окне инкогнито.
 `npm run dev:local -- --seed` пересоздаёт демо-данные.
 
 **Выбрать модель**: `npm run ai:compare -- модель-1 модель-2` прогоняет через каждую модель одни и те же 12 вопросов
@@ -200,7 +193,6 @@ npm run dev                 # http://localhost:3000
 - **Этапы заказа**: подписи и цвета — `STATUSES` в `src/lib/types.ts` (набор этапов задан enum `order_status` в миграциях).
 - **Калькулятор**: цены — в панели (`/admin/prices`); формулы, продукты и их варианты — в `src/lib/pricing.ts`
   (там же цены по образцу, которые `create-company` даёт новой типографии). Цена заявки всегда пересчитывается на сервере.
-- **Демо-стенд**: `DEMO_MODE=true` показывает на главной лендинг продукта с демо-доступами.
 
 ## Проверки
 
@@ -251,4 +243,4 @@ tests/                   тест RLS и e2e-тесты (Playwright)
 - Сотрудник, открывший клиентское приложение, попадает в панель.
 - Лимит попыток входа хранится в памяти процесса: на своём сервере работает полностью, на Vercel — в пределах экземпляра функции
   (за ним остаются лимиты Supabase Auth).
-- Нет онлайн-оплаты и офлайн-режима — см. [ROADMAP.md](ROADMAP.md).
+- Нет онлайн-оплаты и офлайн-режима.

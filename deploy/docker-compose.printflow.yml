@@ -1,4 +1,4 @@
-# PrintFlow on top of the official self-hosted Supabase (deploy/supabase, created by install.sh).
+# The app on top of the official self-hosted Supabase (deploy/supabase, created by install.sh).
 #
 # install.sh adds this file to COMPOSE_FILE in deploy/supabase/.env, so every `sh run.sh …` and
 # `docker compose …` run inside deploy/supabase includes it. Relative paths below resolve against
@@ -15,7 +15,7 @@ services:
     ports:
       - "127.0.0.1:54333:3000"
 
-  # Not used by PrintFlow: the connection pooler (it would also expose Postgres on :5432) and Edge Functions
+  # Not used by the app: the connection pooler (it would also expose Postgres on :5432) and Edge Functions
   supavisor:
     profiles: [unused]
   functions:
@@ -43,14 +43,13 @@ services:
         NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_PUBLIC_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
         NEXT_PUBLIC_SITE_URL: ${SITE_URL}
-        NEXT_PUBLIC_APP_NAME: ${PRINTFLOW_APP_NAME:-PrintFlow}
+        NEXT_PUBLIC_APP_NAME: ${PRINTFLOW_APP_NAME:-Арт Проджект}
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
     restart: unless-stopped
     environment:
       <<: *public
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       DEFAULT_COMPANY_SLUG: ${PRINTFLOW_DEFAULT_COMPANY_SLUG:-}
-      DEMO_MODE: "false"
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: mailto:${SMTP_ADMIN_EMAIL}
       # The same mailbox as Supabase Auth; an empty SMTP_HOST turns client emails off

@@ -13,8 +13,8 @@ import {
 import { isPublicAddress, parsePublicUrl } from "../src/lib/safe-fetch";
 
 const knowledge: Knowledge = {
-  company: { name: "Оттиск", address: "Москва, ул. Печатная, 1", work_hours: "Пн–Пт 9–19", phone: "+7 900 000-00-00", email: null, telegram: "ottisk", max_url: null },
-  calculator: { url: "https://app.example.ru/c/demo/calculator", products: ["Визитки", "Баннеры"] },
+  company: { name: "Арт Проджект", address: "Краснодар, ул. Карякина, 25", work_hours: "Пн–Пт 12–20", phone: "+7 900 000-00-00", email: null, telegram: "ArtProject23", max_url: null },
+  calculator: { url: "https://app.example.ru/c/artproject/calculator", products: ["Визитки", "Баннеры"] },
   templates: [{ question: "Можно оплатить по счёту?", answer: "Да, выставим счёт на юрлицо." }],
   faqs: [{ question: "Сроки?", answer: "От 1 дня." }],
   entries: [{ title: "Макеты", body: "PDF, 300 dpi, вылеты 2 мм." }],
@@ -58,7 +58,7 @@ describe("model answers", () => {
 describe("what the model is told", () => {
   test("the knowledge text has the company card, calculator, templates, FAQ and entries", () => {
     const text = knowledgeText(knowledge);
-    for (const part of ["Название: Оттиск", "Telegram: @ottisk", "Визитки, Баннеры", "Можно оплатить по счёту?", "От 1 дня.", "### Макеты"]) {
+    for (const part of ["Название: Арт Проджект", "Telegram: @ArtProject23", "Визитки, Баннеры", "Можно оплатить по счёту?", "От 1 дня.", "### Макеты"]) {
       assert.ok(text.includes(part), part);
     }
     assert.ok(!text.includes("Email:"), "empty fields are left out");
@@ -87,14 +87,14 @@ describe("what the model is told", () => {
 
 describe("site pages", () => {
   test("page text: no scripts or styles, blocks on their own lines, entities decoded", () => {
-    const { title, text } = htmlToText(`<!doctype html><html><head><title>Услуги &laquo;Оттиск&raquo;</title>
+    const { title, text } = htmlToText(`<!doctype html><html><head><title>Услуги &laquo;Арт Проджект&raquo;</title>
       <style>.a{color:red}</style><script>alert("x")</script></head><body>
       <nav><a href="/">Главная</a></nav><h1>Визитки</h1><p>От&nbsp;500&nbsp;₽ за&nbsp;100&nbsp;шт.</p>
       <ul><li>Матовые</li><li>Глянцевые</li></ul><!-- hidden --><table><tr><td>A4</td><td>10 ₽</td></tr></table>
-      <footer>Адрес: ул. Печатная, 1 &#8212; тел. &#x2B;7</footer></body></html>`);
-    assert.equal(title, "Услуги «Оттиск»");
+      <footer>Адрес: ул. Карякина, 25 &#8212; тел. &#x2B;7</footer></body></html>`);
+    assert.equal(title, "Услуги «Арт Проджект»");
     assert.ok(!/alert|color:red|hidden/.test(text));
-    assert.deepEqual(text.split("\n"), ["Главная", "Визитки", "От 500 ₽ за 100 шт.", "• Матовые", "• Глянцевые", "A4 10 ₽", "Адрес: ул. Печатная, 1 — тел. +7"]);
+    assert.deepEqual(text.split("\n"), ["Главная", "Визитки", "От 500 ₽ за 100 шт.", "• Матовые", "• Глянцевые", "A4 10 ₽", "Адрес: ул. Карякина, 25 — тел. +7"]);
   });
 
   test("only public internet addresses are read", () => {
@@ -107,8 +107,8 @@ describe("site pages", () => {
   });
 
   test("page addresses: http(s) on standard ports, no credentials, no internal hosts", () => {
-    assert.equal(parsePublicUrl("https://ottisk.ru/uslugi#prices").toString(), "https://ottisk.ru/uslugi");
-    for (const url of ["ftp://ottisk.ru", "https://user:pw@ottisk.ru", "https://ottisk.ru:8080", "http://localhost", "http://127.0.0.1", "http://[::1]/", "http://intranet", "https://printer.local", "javascript:alert(1)"]) {
+    assert.equal(parsePublicUrl("https://artproject.ru/uslugi#prices").toString(), "https://artproject.ru/uslugi");
+    for (const url of ["ftp://artproject.ru", "https://user:pw@artproject.ru", "https://artproject.ru:8080", "http://localhost", "http://127.0.0.1", "http://[::1]/", "http://intranet", "https://printer.local", "javascript:alert(1)"]) {
       assert.throws(() => parsePublicUrl(url), url);
     }
   });
