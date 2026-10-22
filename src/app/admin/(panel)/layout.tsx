@@ -4,6 +4,7 @@ import { StatusesProvider } from "@/components/statuses";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TimeZoneProvider } from "@/components/time-zone";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { aiConfigured } from "@/lib/assistant-server";
 import { requireStaff } from "@/lib/auth";
 import { brandStyle } from "@/lib/brand";
 import { companyStatuses } from "@/lib/types";
@@ -18,7 +19,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
   return (
     <TooltipProvider>
       <SidebarProvider style={brandStyle(company.brand_color)} className="brand-scope">
-        <AppSidebar company={company} profile={profile} unread={count ?? 0} />
+        <AppSidebar company={company} profile={profile} unread={count ?? 0} ai={aiConfigured()} />
         <RealtimeRefresh table="messages" filter={`company_id=eq.${company.id}`} />
         <SidebarInset>
           <header className="flex h-14 items-center gap-2 bg-card px-4 md:hidden">

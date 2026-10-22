@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { AiDraftPanel } from "@/components/admin/ai-draft-panel";
 import { ChatStatusButton } from "@/components/admin/chat-status-button";
 import { Chat } from "@/components/chat";
+import { aiConfigured } from "@/lib/assistant-server";
 import { requireStaff } from "@/lib/auth";
 import type { AiDraft, ChatState, Message, Profile } from "@/lib/types";
 
@@ -14,15 +15,17 @@ export default async function DialogPage({ params }: PageProps<"/admin/chat/[cli
     supabase.from("profiles").select("*").eq("id", clientId).eq("role", "client").maybeSingle<Profile>(),
     supabase.from("messages").select("*").eq("client_id", clientId).order("created_at").returns<Message[]>(),
     supabase.from("chats").select("client_id, closed_at, closed_count").eq("client_id", clientId).maybeSingle<ChatState>(),
-    supabase
-      .from("ai_drafts")
-      .select("*")
-      .eq("client_id", clientId)
-      .eq("kind", "reply")
-      .eq("status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle<AiDraft>(),
+    aiConfigured()
+      ? supabase
+          .from("ai_drafts")
+          .select("*")
+          .eq("client_id", clientId)
+          .eq("kind", "reply")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle<AiDraft>()
+      : { data: null },
   ]);
   if (!client) notFound();
 

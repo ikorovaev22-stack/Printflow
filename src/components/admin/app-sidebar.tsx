@@ -22,7 +22,7 @@ import {
 import { initials } from "@/lib/format";
 import type { Company, Profile } from "@/lib/types";
 
-export function AppSidebar({ company, profile, unread }: { company: Company; profile: Profile; unread: number }) {
+export function AppSidebar({ company, profile, unread, ai }: { company: Company; profile: Profile; unread: number; ai: boolean }) {
   const pathname = usePathname();
   const items = [
     { href: "/admin/orders", label: "Заказы", icon: Package },
@@ -31,7 +31,7 @@ export function AppSidebar({ company, profile, unread }: { company: Company; pro
     { href: "/admin/faq", label: "Вопросы", icon: CircleHelp },
     ...(profile.role === "owner"
       ? [
-          { href: "/admin/ai", label: "ИИ-помощник", icon: Sparkles },
+          ...(ai ? [{ href: "/admin/ai", label: "ИИ-помощник", icon: Sparkles }] : []),
           { href: "/admin/prices", label: "Цены", icon: Calculator },
           { href: "/admin/settings", label: "Настройки", icon: Settings },
         ]

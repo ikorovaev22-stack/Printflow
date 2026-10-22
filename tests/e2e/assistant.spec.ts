@@ -1,15 +1,17 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { CLIENT_STATE, OWNER_STATE } from "./helpers";
 
-// The AI assistant, as the owner sets it up. Specs marked "model" need the stand-in model (see playwright.config.ts)
+// The AI assistant, as the owner sets it up. The section is there only with a model: the stand-in from
+// playwright.config.ts, otherwise these specs are skipped
 test.use({ storageState: OWNER_STATE });
-test.beforeEach(({ page }) => page.on("dialog", (d) => d.accept()));
-
-async function modelOn(page: Page) {
+test.beforeEach(async ({ page }) => {
+  page.on("dialog", (d) => d.accept());
   await page.goto("/admin/ai");
-  await expect(page.getByRole("heading", { name: "Автоответчик в чате" })).toBeVisible();
-  return !(await page.getByText("Нейросеть не подключена").isVisible());
-}
+  // Without a model the page sends the owner on to the orders
+  const section = page.getByRole("heading", { name: "ИИ-помощник" });
+  await expect(section.or(page.getByRole("heading", { name: "Заказы" }))).toBeVisible();
+  test.skip(!(await section.isVisible()), "the app runs without AI_BASE_URL");
+});
 
 async function setMode(page: Page, mode: "Выключен" | "Черновики" | "Отвечает сам") {
   await page.goto("/admin/ai");
@@ -102,8 +104,6 @@ test("a news draft is checked, published and seen by clients", async ({ page, br
 });
 
 test.describe("with a model", () => {
-  test.beforeEach(async ({ page }) => test.skip(!(await modelOn(page)), "the app runs without AI_BASE_URL"));
-
   test("checks an answer and writes FAQ drafts without sending anything", async ({ page }) => {
     await page.getByLabel("Вопрос клиента").fill("Сколько стоят визитки?");
     await page.getByRole("button", { name: "Проверить ответ" }).click();
